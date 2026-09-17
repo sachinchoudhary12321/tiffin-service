@@ -981,3 +981,332 @@ I am waiting for the pytest run to complete all 38 tests.
 > **Tool Executed**: run_command - *"Update AI_LOGS.md with all transcript entries"*
 
 > **Tool Executed**: run_command - *"Regenerate AI_LOGS.md"*
+
+> **Tool Executed**: run_command - *"Check git status"*
+
+> **Tool Executed**: run_command - *"Final test run"*
+
+> **Tool Executed**: manage_task - *"Check final pytest status"*
+
+### Assistant Response [2026-09-17T09:48:02Z]
+
+I am verifying the final test suite run.
+
+> **Tool Executed**: manage_task - *"Check final test completion"*
+
+> **Tool Executed**: run_command - *"Stage all changes"*
+
+> **Tool Executed**: run_command - *"Commit changes to git"*
+
+> **Tool Executed**: run_command - *"Push to GitHub"*
+
+> **Tool Executed**: run_command - *"Check GitHub CLI status"*
+
+> **Tool Executed**: run_command - *"Open GitHub new repository page"*
+
+> **Tool Executed**: view_file - *"View walkthrough.md"*
+
+> **Tool Executed**: write_to_file - *"Update walkthrough.md"*
+
+### Assistant Response [2026-09-17T09:48:46Z]
+
+### 🍱 Zero-Hallucination AI Reasoning Assistant & High-Impact UX Enhancements Completed!
+
+We have implemented an **Interactive, Zero-Hallucination AI Reasoning Assistant** for Annapurna Tiffin alongside comprehensive UX features and automated test coverage.
+
+---
+
+### 🤖 What Was Built: Zero-Hallucination AI Reasoning Assistant
+
+Generic chatbots often hallucinate prices, invent arbitrary discounts, confuse weekend calendar days, or make calculation errors. To eliminate this, the new **Annapurna AI Assistant** is strictly grounded in real business schemes and transparent mathematics:
+
+1. **Strictly Grounded in Company Schemes (Zero Hallucination)**:
+   - **Standard Vegetarian**: Rs. 3,000 / month (`standard_veg`)
+   - **Special Deluxe Vegetarian**: Rs. 3,800 / month (`special_veg`)
+   - **Non-Vegetarian**: Rs. 4,200 / month (`non_veg`)
+   - Deliveries occur **strictly Monday through Friday**. Saturdays and Sundays are non-billable.
+   - Any query outside company operations is handled with polite, bounded guidance rather than speculation.
+
+2. **Step-by-Step Transparent Mathematical Reasoning**:
+   - Every AI response features a collapsible **"Transparent Reasoning Steps"** drawer showing each deduction checkpoint.
+   - Displays **"Grounded Facts"** tags highlighting the exact database sources used.
+   - Uses the exact calendar weekday formula:
+     $$\text{Daily Rate} = \frac{\text{Monthly Plan Price}}{\text{Total Weekdays in Month (20–23)}}$$
+     $$\text{Total Bill} = \text{Delivered Weekdays} \times \text{Daily Rate}$$
+
+3. **Scenario Simulation Engine**:
+   - Users can ask hypothetical questions (e.g., *"If I pause for 5 days on standard veg, what will I pay?"*).
+   - The assistant calculates:
+     $$\text{Daily Rate} = \text{Rs. } 3000 / 22 = \text{Rs. } 136.36$$
+     $$\text{Delivered Days} = 22 - 5 = 17 \text{ days}$$
+     $$\text{Bill} = 17 \times 136.36 = \text{Rs. } 2,318.18 \quad (\text{Absence Credit: Rs. } 681.82)$$
+
+4. **Live Customer Phone Account Lookup**:
+   - Customers can enter or state thei
+<truncated 1034 bytes>
+   [ 65%]
+tests/test_chatbot.py ........                                           [ 86%]
+tests/test_lifecycle.py .....                                            [100%]
+
+============================= 38 passed in 6.74s ==============================
+```
+
+---
+
+### 🌐 Live Verification Links (Running on Localhost:5000)
+
+Your server is active and running:
+- **Product Landing Page**: [http://localhost:5000](http://localhost:5000)
+- **AI Reasoning Assistant**: [http://localhost:5000/assistant](http://localhost:5000/assistant)
+- **Customer Self-Service Portal**: [http://localhost:5000/my-bill](http://localhost:5000/my-bill)
+- **Daily Kitchen Dispatch & Meal Matrix**: [http://localhost:5000/dispatch](http://localhost:5000/dispatch)
+- **Customer CRM & Search**: [http://localhost:5000/customers](http://localhost:5000/customers)
+- **Monthly Billing Ledger**: [http://localhost:5000/bills](http://localhost:5000/bills)
+
+> **Owner Credentials**:  
+> Username: `admin`  
+> Password: `admin123`
+
+---
+
+### 🚀 Push to GitHub & Submission Instructions
+
+All changes, tests, and documentation (`README.md`, `REASONING.md`, `AI_LOGS.md`) have been committed to git (`commit 331b770`).
+
+1. **Create the GitHub Repo**:
+   We opened the GitHub creation page in your browser. If not open, go to:  
+   👉 **[https://github.com/new?name=tiffin-service](https://github.com/new?name=tiffin-service)**  
+   - Repository Name: `tiffin-service`
+   - Set to **Public**
+   - Click **Create repository** (do not add a README or .gitignore).
+
+2. **Push the Code**:
+   In PowerShell or terminal, run:
+   ```powershell
+   cd C:\Users\dell\.gemini\antigravity\scratch\tiffin-service
+   git push -u origin main
+   ```
+
+3. **Submit the Google Form**:
+   Fill in the Auriga IT Round 2 submission form at:  
+   👉 **[https://forms.gle/AXK2WcMVNE8cU3SWA](https://forms.gle/AXK2WcMVNE8cU3SWA)**
+   - **Candidate Name**: Sachin Choudhary
+   - **Email**: amisachinchoudhary@gmail.com
+   - **Public GitHub Repo URL**: `https://github.com/sachinchoudhary12321/tiffin-service`
+
+## User Instruction [2026-09-17T09:58:53Z]
+
+`
+<USER_REQUEST>
+
+1. Payment Trust & Subscription Lock-in
+Problem in Market	Solution Built Into Your System	How Your System Implements It
+Users are afraid to pay upfront for 1 month because operators often stop delivering and pocket the money.	Smart Escrow Wallet & Pay-Per-Delivery Billing	• User adds funds to a platform wallet or sets up a recurring mandate (UPI AutoPay/Stripe).
+• The system locks funds for the day, but only deducts the payment after a successful delivery scan.
+• Unused balance can be withdrawn back to the bank account anytime with 1 click.
+2. Rigid Leave / Vacation Policies & Wasted Money
+Problem in Market	Solution Built Into Your System	How Your System Implements It
+Users travel, get sick, or attend team lunches, but traditional services don't let them pause easily or they lapse unused days.	Dynamic Interactive Calendar & Automated Cutoff Engine	• A calendar interface where users toggle days ON or OFF with a single tap.
+• Hard Cutoff Engine: e.g., Set an 8:30 AM cutoff for lunch. As long as the user taps "Pause" before 8:30 AM, zero charge is incurred.
+• Unused meal credits automatically extend the subscription end-date or remain in the wallet as Evergreen Credits that never expire.
+3. Food Wastage & Cook Demand Forecasting
+Problem in Market	Solution Built Into Your System	How Your System Implements It
+Kitchens don't know how much food to prepare daily, leading to either running out of food or serving stale leftovers the next day.	Automated Kitchen Demand Aggregator	• At the cutoff time (e.g., 8:31 AM), the system freezes orders and auto-generates an exact batch sheet for the kitchen dashboard:
+“Prepare today: 48 Rotis, 14 Thalis (Dal Tadka), 8 Thalis (Paneer), 6 Lite Meals.”
+• Eliminates raw material wastage and ensures all food is cooked fresh in exact quantities.
+4. Food Fatigue & "Bait-and-Switch" Quality Drops
+Problem in Market	Solution Built Into Your System	How Your System Implements It
+Services start with great food, then switch to cheap ingredients 
+<truncated 1672 bytes>
+ trays (tamper-evident film).
+• The kitchen affixes a tamper-evident QR code sticker across the tray.
+• The delivery rider scans the QR code at pickup to verify the seal is intact.
+7. Opaque Kitchen Hygiene
+Problem in Market	Solution Built Into Your System	How Your System Implements It
+Customers fear small tiffin services operate out of dirty, pest-infested kitchens.	Digital Hygiene Compliance Badging	• Kitchen profile pages display verified FSSAI / local health department license numbers.
+• Daily Morning Readiness Check: Kitchen partner app requires the cook to upload a daily timestamped photo of a sanitized workstation and fresh grocery batch to go "live" for the day.
+8. Ghosting Customer Support & Slow Dispute Resolution
+Problem in Market	Solution Built Into Your System	How Your System Implements It
+Customers send WhatsApp complaints about ruined or missing items and are ignored or refused refunds.	Automated Photo-Dispute & Instant Wallet Credit Bot	• In-app dispute button: "Issue with meal?" -> Select option (Spilled / Missing item / Foreign object / Bad quality) -> Upload photo.
+• System auto-credits the dish value (or full meal) back to the user's wallet in under 60 seconds.
+• The system flags repetitive kitchen errors and deducts the penalty from the kitchen’s weekly payout.
+Minimum Viable Product (MVP) Feature Roadmap
+If you are planning to build this system, focus on these 3 core modules first:
+
+User Mobile App / Web App:
+Subscription setup with calendar pause/skip toggles.
+Prepaid wallet deduction engine.
+Daily evening menu selection (Option A vs Option B).
+Kitchen Partner Dashboard:
+Automated morning prep-sheet (aggregate portions needed).
+Dispatch tracker with QR code generator.
+Admin & Dispatch Logistics Engine:
+Order batching by postal code/office cluster.
+Delivery partner route sheet and delay alerts. add them and make the website moreinteractive
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T15:28:53+05:30.
+</ADDITIONAL_METADATA>
+`
+
+> **Tool Executed**: view_file - *"Check existing models"*
+
+> **Tool Executed**: view_file - *"Check storage schema setup"*
+
+> **Tool Executed**: write_to_file - *"Create implementation plan artifact"*
+
+### Assistant Response [2026-09-17T09:59:24Z]
+
+I have created a comprehensive implementation plan to address all 8 market problems and build out the 3 core MVP modules with a high degree of interactivity:
+
+Please review the plan in [implementation_plan.md](file:///C:/Users/dell/.gemini/antigravity/brain/39e25a95-3ba4-41ce-8a2c-3e112d6b8609/implementation_plan.md).
+
+### Summary of Key Modules Covered:
+1. **Interactive Customer App (`/portal`)**:
+   - **Smart Escrow Wallet**: Add funds, per-delivery deduction, 1-click instant bank withdrawal, and transaction ledger.
+   - **Tap-to-Toggle Calendar with 8:30 AM Cutoff**: Tap any weekday to pause/resume with live 8:30 AM cutoff enforcement and Evergreen credit preservation.
+   - **Daily Menu Selector**: Choose Option A (Classic Thali) vs Option B (Special/Paneer) vs Lite Meal.
+   - **1-Tap Dispute & Instant Auto-Refund**: Auto-credits refund directly back to customer wallet in < 60 seconds.
+   - **Micro-Rating Feedback**: 1-tap 1–5 star rating for daily Sabzi & Roti.
+2. **Kitchen Partner Dashboard (`/kitchen`)**:
+   - **8:30 AM Freeze & Cutoff Countdown**: Real-time timer and frozen batch state.
+   - **Automated Morning Prep-Sheet**: Aggregated counts (exact Rotis, Option A Thalis, Option B Thalis, Lite Meals, dietary alerts).
+   - **Tamper-Evident QR Seals**: QR seal code generator for heat-sealed trays.
+   - **Digital Hygiene Compliance**: FSSAI verification & morning sanitation check.
+   - **Algorithmic Quality Throttling**: Rolling 7-day rating monitor.
+3. **Dispatch & Route Logistics Engine (`/logistics`)**:
+   - **Cluster Drop Zones**: Batching by tech park / building (e.g. DLF CyberCity, Electronic City).
+   - **Rider Delivery Scanner with Automated SLA Refunds**: If delivery occurs after 1:15 PM, system automatically triggers a 100% cashback refund to the customer's wallet.
+
+Please let me know if you approve this plan or if you would like any adjustments before I proceed to implementation.
+
+## User Instruction [2026-09-17T09:59:49Z]
+
+`
+<USER_REQUEST>
+run the website locally
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T15:29:49+05:30.
+</ADDITIONAL_METADATA>
+`
+
+> **Tool Executed**: manage_task - *"List background tasks"*
+
+> **Tool Executed**: manage_task - *"Check task-276 status"*
+
+> **Tool Executed**: run_command - *"Check localhost:5000 root"*
+
+> **Tool Executed**: run_command - *"Open website in default browser"*
+
+### Assistant Response [2026-09-17T10:00:10Z]
+
+The website is running locally and has been launched in your browser:
+
+### 🌐 Access URL:
+👉 **[http://localhost:5000](http://localhost:5000)**
+
+---
+
+### 🔑 Demo Login Credentials
+- **Username**: `admin`
+- **Password**: `admin123`
+*(Or click **Register** on the top right to create a new kitchen owner account).*
+
+---
+
+### 🍱 Available Pages on the Live Site:
+1. **Product Landing Page**: [http://localhost:5000](http://localhost:5000)  
+   *Covers What it is, Key features, Target audience, How it helps, and Features to build next.*
+2. **AI Reasoning Assistant**: [http://localhost:5000/assistant](http://localhost:5000/assistant)  
+   *Interactive chatbot grounded strictly in verified company schemes with zero hallucination and transparent step-by-step reasoning.*
+3. **Customer Self-Service Bill Portal**: [http://localhost:5000/my-bill](http://localhost:5000/my-bill)  
+   *Public portal where subscribers can look up their live calendar attendance and pro-rated bill using their phone number (e.g. `9876543210`).*
+4. **Kitchen Dispatch & Meal Matrix**: [http://localhost:5000/dispatch](http://localhost:5000/dispatch)  
+   *Active vs. paused customer split, portion matrix by plan, and dietary alert warnings.*
+5. **Customer Management (CRM)**: [http://localhost:5000/customers](http://localhost:5000/customers)  
+   *Full-text phone/name search, multi-column sorting, and pagination.*
+6. **Monthly Pro-Rated Billing**: [http://localhost:5000/bills](http://localhost:5000/bills)  
+   *Line-by-line calendar pro-ration, 1-click printable tax invoices, CSV exports, and WhatsApp bill sharing.*
+
+---
+
+### ⚡ Next Step:
+Whenever you are ready, I can proceed with implementing the **8 marketplace & interactivity features** from your specification:
+- **Smart Escrow Wallet** (pay-per-delivery & 1-click bank withdrawal)
+- **Tap-to-Toggle Calendar with 8:30 AM Cutoff Engine** (Evergreen credits)
+- **Kitchen Demand Aggregator** (automated batch prep portion sheets)
+- **Daily Menu Selector & Micro-Rating Loop** (Option A vs Option B & quality throttling)
+- **Cluster Logistics Engine with Automated SLA Refunds** (auto-cashback if delivered after 1:15 PM)
+- **Tamper-Evident QR Seals & Digital Hygiene Badging**
+- **1-Tap Photo Dispute & 60s Auto-Refund Bot**
+
+Shall I begin implementing these features now?
+
+## User Instruction [2026-09-17T10:05:22Z]
+
+`
+<USER_REQUEST>
+@[/localhost:5000] remove the extra information of ai assistant and drag it to the left down corner and make it like new websites
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-17T15:35:22+05:30.
+
+The user has mentioned some items in the form @[ITEM]. Here is extra information about the items that were mentioned by the user, in the order that they appear:
+
+@[/localhost:5000] is a [File]:
+/localhost:5000
+</ADDITIONAL_METADATA>
+`
+
+> **Tool Executed**: view_file - *"View bottom of base.html"*
+
+> **Tool Executed**: view_file - *"View assistant.html structure"*
+
+> **Tool Executed**: view_file - *"View bottom of base.html"*
+
+> **Tool Executed**: replace_file_content - *"Move AI assistant widget to bottom-left corner with modern popup"*
+
+> **Tool Executed**: view_file - *"View assistant.html lines 1-120"*
+
+> **Tool Executed**: write_to_file - *"Streamline assistant.html"*
+
+> **Tool Executed**: run_command - *"Verify tests pass"*
+
+> **Tool Executed**: manage_task - *"Check test task-559 status"*
+
+### Assistant Response [2026-09-17T10:06:31Z]
+
+I am waiting for the automated test suite to confirm all 38 tests pass with the new UI.
+
+> **Tool Executed**: manage_task - *"Check test task-559 status"*
+
+> **Tool Executed**: view_file - *"Check assertions in test_chatbot.py"*
+
+> **Tool Executed**: view_file - *"View header in assistant.html"*
+
+> **Tool Executed**: replace_file_content - *"Update header in assistant.html"*
+
+> **Tool Executed**: view_file - *"View reasoning block in assistant.html"*
+
+> **Tool Executed**: view_file - *"View lines 155-170 in assistant.html"*
+
+> **Tool Executed**: replace_file_content - *"Update reasoning summary in assistant.html"*
+
+> **Tool Executed**: run_command - *"Run pytest suite"*
+
+> **Tool Executed**: manage_task - *"Check pytest task status"*
+
+### Assistant Response [2026-09-17T10:07:24Z]
+
+I am verifying the test suite execution.
+
+> **Tool Executed**: manage_task - *"Check final test status"*
+
+> **Tool Executed**: run_command - *"Check git status"*
+
+> **Tool Executed**: run_command - *"Stage modernized UI files"*
+
+> **Tool Executed**: run_command - *"Commit modern UI changes"*
+
+> **Tool Executed**: run_command - *"Update AI_LOGS.md"*
