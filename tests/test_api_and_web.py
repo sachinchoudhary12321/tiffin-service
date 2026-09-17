@@ -142,3 +142,55 @@ def test_api_bills_summary_pagination(client):
     assert data["success"] is True
     assert "bills" in data
     assert "grand_total" in data
+
+
+def test_whatsapp_link_generation():
+    from tiffin.models import Bill, DayStatus
+    b = Bill(
+        customer_phone="9876543210",
+        customer_name="Sunita Rao",
+        plan_id="standard_veg",
+        plan_name="Standard Vegetarian",
+        plan_monthly_price=3000.0,
+        billing_year=2026,
+        billing_month=10,
+        month_name="October",
+        total_month_weekdays=22,
+        subscribed_weekdays=22,
+        paused_weekdays=5,
+        holiday_weekdays=0,
+        delivered_weekdays=17,
+        daily_rate=136.3636,
+        total_amount=2318.18,
+    )
+    link = web_module.service.generate_whatsapp_message(b)
+    assert link.startswith("https://wa.me/919876543210?text=")
+    assert "Annapurna" in link
+    assert "2318.18" in link
+
+
+def test_csv_exports(client):
+    # Test bills CSV export
+    r_csv = client.get("/export/bills.csv?month=2026-10")
+    assert r_csv.status_code == 200
+    assert "text/csv" in r_csv.headers.get("Content-Type", "")
+    assert "Customer Name,Phone,Plan" in r_csv.data.decode("utf-8")
+
+    # Test dispatch CSV export
+    r_disp_csv = client.get("/export/dispatch.csv?date=2026-10-07")
+    assert r_disp_csv.status_code == 200
+    assert "text/csv" in r_disp_csv.headers.get("Content-Type", "")
+    assert "Delivery Status,Customer Name,Phone" in r_disp_csv.data.decode("utf-8")
+
+
+def test_customer_self_service_portal(client):
+    client.post("/api/subscriptions", json={
+        "name": "Manish Malhotra", "phone": "9844444444", "plan_id": "standard_veg", "start_date": "2026-10-01"
+    })
+    res = client.get("/my-bill?phone=9844444444&month=2026-10")
+    assert res.status_code == 200
+    html = res.data.decode("utf-8")
+    assert "Customer Self-Service Bill Portal" in html
+    assert "Manish Malhotra" in html
+    assert "Verified Bill" in html
+

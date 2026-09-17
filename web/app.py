@@ -10,7 +10,7 @@ from functools import wraps
 import os
 import sys
 
-from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, Response, session, url_for
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -217,9 +217,11 @@ def billing_view():
 
     single_phone = request.args.get("phone")
     single_bill = None
+    whatsapp_link = None
     if single_phone:
         try:
             single_bill = service.generate_bill(single_phone, year, month)
+            whatsapp_link = service.generate_whatsapp_message(single_bill)
         except Exception:
             pass
 
@@ -237,8 +239,66 @@ def billing_view():
         order=order,
         grand_total=grand_total,
         single_bill=single_bill,
+        whatsapp_link=whatsapp_link,
         current_user=get_current_user(),
     )
+
+
+@app.route("/my-bill")
+def my_bill_view():
+    """Public customer self-service portal: look up your own live bill by phone."""
+    phone = request.args.get("phone", "").strip()
+    month_str = request.args.get("month")
+    if not month_str:
+        today = date.today()
+        month_str = f"{today.year:04d}-{today.month:02d}"
+
+    year, month = map(int, month_str.split("-"))
+    bill = None
+    error = None
+
+    if phone:
+        try:
+            bill = service.generate_bill(phone, year, month)
+        except Exception as e:
+            error = str(e)
+
+    return render_template(
+        "my_bill.html",
+        phone=phone,
+        month=month_str,
+        bill=bill,
+        error=error,
+        current_user=get_current_user(),
+    )
+
+
+@app.route("/export/bills.csv")
+def export_bills():
+    month_str = request.args.get("month")
+    if not month_str:
+        today = date.today()
+        month_str = f"{today.year:04d}-{today.month:02d}"
+    year, month = map(int, month_str.split("-"))
+    csv_data = service.export_bills_csv(year, month)
+    return Response(
+        csv_data,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename=tiffin_bills_{year:04d}_{month:02d}.csv"}
+    )
+
+
+@app.route("/export/dispatch.csv")
+def export_dispatch():
+    date_str = request.args.get("date")
+    target_date = parse_date(date_str) if date_str else date.today()
+    csv_data = service.export_dispatch_csv(target_date)
+    return Response(
+        csv_data,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename=kitchen_dispatch_{format_date(target_date)}.csv"}
+    )
+
 
 
 # ==========================================

@@ -13,8 +13,12 @@ Customers subscribe to a monthly meal plan for weekday lunch deliveries, pause d
 - **Modern Responsive Web UI**: Tailwind CSS interface with kitchen dispatch sheet, phone lookup dossier, and 1-click printable tax invoices.
 - **User Authentication**: Secure user registration, login, session cookies, and `pbkdf2:sha256` password hashing.
 - **Search, Pagination & Sorting**: Case-insensitive search across customer names, phone numbers, and addresses with dynamic sorting (`asc`/`desc`) and multi-page pagination.
+- **WhatsApp 1-Click Bill Sharing**: Instant pre-formatted WhatsApp billing notification generator (`wa.me`) with line-by-line breakdown for easy customer sharing.
+- **1-Click CSV Exports**: One-click download of Monthly Billing Ledgers (`/export/bills.csv`) and Daily Delivery Run-Sheets (`/export/dispatch.csv`).
+- **Customer Self-Service Bill Portal (`/my-bill`)**: Public portal where subscribers check their personal live attendance calendar and verified pro-rated bill by phone number.
+- **Kitchen Meal Plan Matrix & Dietary Alerts**: Real-time kitchen tally of meal plans (Standard Veg, Deluxe Veg, Non-Veg) and special dietary instructions (no onion-garlic, extra roti, mild spice).
 - **One-Page Product Landing Page**: Integrated showcase covering What it is, Key features, Target audience, How it helps, and Three features to build next.
-- **Automated Test Suite**: 27 unit, integration, and API tests with 100% pass rate.
+- **Automated Test Suite**: 30 unit, integration, and API tests with 100% pass rate.
 
 ---
 

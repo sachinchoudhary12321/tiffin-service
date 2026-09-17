@@ -191,3 +191,26 @@ Testing was approached with rigor across five dedicated test suites containing *
 | **README.md** | Setup guide, architecture, and complete REST API documentation | Complete |
 | **REASONING.md** | Comprehensive technical and domain decision analysis | Complete |
 | **AI_LOGS.md** | Verbatim conversation logs with AI assistant | Complete |
+
+---
+
+## 7. High-Impact UX Enhancements (Real-World Delight)
+
+Beyond the baseline requirements, we implemented four major user experience enhancements tailored to how actual tiffin businesses operate:
+
+1. **WhatsApp 1-Click Invoice Dispatch (`wa.me`)**:
+   - *Rationale*: In India and globally, local meal providers do not send paper letters or PDF emails; 95% of communication is over WhatsApp.
+   - *Solution*: A dedicated "Share via WhatsApp" button encodes the customer's phone number, name, month, delivered days, paused days, daily rate, and total balance due into a pre-formatted WhatsApp link that opens directly on the owner's phone or desktop.
+
+2. **1-Click CSV Exports for Drivers & Accountants**:
+   - *Rationale*: Drivers need offline, printable run-sheets of today's delivery addresses, and accountants need Excel files at month-end.
+   - *Solution*: Added `/export/bills.csv` (complete monthly collection ledger) and `/export/dispatch.csv` (today's active route run-sheet with delivery addresses and notes).
+
+3. **Kitchen Meal Matrix & Dietary Alert Banners**:
+   - *Rationale*: Chefs cannot read 50 individual customer cards every morning to figure out how many veg vs non-veg meals to cook.
+   - *Solution*: The dispatch dashboard aggregates active meals by plan (e.g. Standard Veg: 12, Deluxe: 8, Non-Veg: 4) and displays a prominent warning box for special dietary requests (mild spice, no garlic, extra roti).
+
+4. **Customer Self-Service Bill Portal (`/my-bill`)**:
+   - *Rationale*: Reduces repetitive customer inquiries ("How much do I owe this month?").
+   - *Solution*: A public, secure customer portal where subscribers simply enter their phone number to see their own attendance calendar and pro-rated bill without needing admin credentials.
+

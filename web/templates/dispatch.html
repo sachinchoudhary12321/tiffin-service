@@ -56,7 +56,47 @@
         <i class="fa-solid fa-users"></i>
       </div>
     </div>
-  </div>
+  <!-- Kitchen Prep Aggregator: Meal Plan Breakdown & Dietary Notes -->
+  {% if dispatch.is_weekday and not dispatch.is_holiday %}
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap justify-between items-center gap-4">
+      <div class="space-y-1">
+        <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kitchen Prep Counts by Plan</h4>
+        <div class="flex flex-wrap gap-2 pt-1">
+          {% if dispatch.plan_counts %}
+            {% for plan_name, count in dispatch.plan_counts.items() %}
+              <span class="px-3 py-1 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl text-xs font-extrabold flex items-center gap-1.5">
+                <i class="fa-solid fa-bowl-rice text-amber-600"></i> {{ plan_name }}: <span class="text-amber-700 underline">{{ count }}</span>
+              </span>
+            {% endfor %}
+          {% else %}
+            <span class="text-xs text-slate-400">No active meals to prepare.</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('export_dispatch', date=dispatch.date) }}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition inline-flex items-center shadow-sm">
+          <i class="fa-solid fa-file-csv mr-1.5 text-amber-600"></i> Export Delivery Run-Sheet (CSV)
+        </a>
+      </div>
+    </div>
+
+    {% if dispatch.dietary_notes %}
+      <div class="bg-amber-50/70 border border-amber-200/80 p-4 rounded-2xl flex items-start gap-3">
+        <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5 text-sm"></i>
+        <div>
+          <h4 class="text-xs font-bold text-amber-900">Special Dietary Preferences for Today ({{ dispatch.dietary_notes|length }} requests):</h4>
+          <div class="flex flex-wrap gap-2 mt-1.5">
+            {% for dn in dispatch.dietary_notes %}
+              <span class="px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-xs text-amber-950 font-medium">
+                <strong>{{ dn.name }}</strong>: {{ dn.note }}
+              </span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
 
   <!-- Lists Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

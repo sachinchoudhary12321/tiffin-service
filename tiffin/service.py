@@ -4,9 +4,12 @@ Coordinates subscription lifecycle, pause/resume, daily dispatch, and billing.
 """
 
 from __future__ import annotations
+import csv
 from datetime import date, timedelta
+import io
 import re
 from typing import Any, Dict, List, Optional, Set
+import urllib.parse
 
 from .billing import calculate_pro_rated_bill
 from .calendar_utils import format_date, is_weekday, parse_date
@@ -331,6 +334,15 @@ class TiffinService:
                         "notes": cust.notes,
                     })
 
+        # Aggregate meal plan breakdown and dietary notes
+        plan_counts: Dict[str, int] = {}
+        dietary_notes: List[Dict[str, str]] = []
+        for item in active_deliveries:
+            plan_name = item["plan_name"]
+            plan_counts[plan_name] = plan_counts.get(plan_name, 0) + 1
+            if item.get("notes"):
+                dietary_notes.append({"name": item["name"], "phone": item["phone"], "note": item["notes"]})
+
         return {
             "date": t_date,
             "day_name": day_name,
@@ -341,6 +353,8 @@ class TiffinService:
             "active_count": len(active_deliveries),
             "paused_count": len(paused_deliveries),
             "total_subscribed": len(active_deliveries) + len(paused_deliveries),
+            "plan_counts": plan_counts,
+            "dietary_notes": dietary_notes,
         }
 
     # --- Billing Generation ---
@@ -421,4 +435,60 @@ class TiffinService:
         offset = max(0, (page - 1) * per_page)
         paginated = sorted_bills[offset : offset + per_page]
         return paginated, total_count, total_pages
+
+    # --- WhatsApp Messaging & CSV Exports ---
+    def generate_whatsapp_message(self, bill: Bill) -> str:
+        """
+        Generate a formatted WhatsApp billing notification with URL encoding.
+        """
+        raw_msg = (
+            f"🍱 *Annapurna Tiffin Service - Month-End Bill*\n"
+            f"Dear {bill.customer_name},\n\n"
+            f"Your pro-rated tiffin bill for *{bill.month_name} {bill.billing_year}* is ready:\n"
+            f"• Plan: {bill.plan_name}\n"
+            f"• Working Days: {bill.total_month_weekdays} days\n"
+            f"• Meals Delivered: {bill.delivered_weekdays} days\n"
+            f"• Days Paused: {bill.paused_weekdays} days (100% credited)\n"
+            f"• Daily Rate: Rs. {bill.daily_rate:.2f}/meal\n"
+            f"• *TOTAL AMOUNT DUE: Rs. {bill.total_amount:.2f}*\n\n"
+            f"Thank you for choosing Annapurna Tiffin! 🙏"
+        )
+        encoded_text = urllib.parse.quote(raw_msg)
+        clean_phone = re.sub(r"[^\d]", "", bill.customer_phone)
+        if len(clean_phone) == 10:
+            clean_phone = "91" + clean_phone  # default country code for India if 10 digits
+        return f"https://wa.me/{clean_phone}?text={encoded_text}"
+
+    def export_bills_csv(self, year: int, month: int) -> str:
+        """Export monthly bills summary to CSV string."""
+        bills = self.generate_all_bills(year, month)
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Customer Name", "Phone", "Plan", "Month",
+            "Working Weekdays", "Subscribed Days", "Paused Days",
+            "Delivered Days", "Daily Rate (Rs)", "Total Bill (Rs)"
+        ])
+        for b in bills:
+            writer.writerow([
+                b.customer_name, b.customer_phone, b.plan_name, f"{year:04d}-{month:02d}",
+                b.total_month_weekdays, b.subscribed_weekdays, b.paused_weekdays,
+                b.delivered_weekdays, f"{b.daily_rate:.2f}", f"{b.total_amount:.2f}"
+            ])
+        return output.getvalue()
+
+    def export_dispatch_csv(self, target_date: Optional[date | str] = None) -> str:
+        """Export daily kitchen dispatch run-sheet to CSV string."""
+        dispatch = self.get_daily_dispatch(target_date)
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow([
+            "Delivery Status", "Customer Name", "Phone", "Plan", "Delivery Address", "Notes / Reason"
+        ])
+        for a in dispatch["active_deliveries"]:
+            writer.writerow(["ACTIVE - DELIVER", a["name"], a["phone"], a["plan_name"], a.get("address", ""), a.get("notes", "")])
+        for p in dispatch["paused_deliveries"]:
+            writer.writerow(["PAUSED - SKIP", p["name"], p["phone"], p["plan_name"], "", f"Reason: {p['reason']} (Resumes: {p['resume_date']})"])
+        return output.getvalue()
+
 
