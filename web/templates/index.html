@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tiffin Service Manager & Pro-Rated Billing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+  <header class="bg-amber-600 text-white shadow no-print">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <span class="text-3xl">🍱</span>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">Annapurna Tiffin Service</h1>
+          <p class="text-xs text-amber-100">Daily Weekday Meal Dispatch & Pro-Rated Billing</p>
+        </div>
+      </div>
+      <nav class="flex space-x-2 text-sm font-medium">
+        <a href="{{ url_for('dispatch_view') }}" class="px-3 py-2 rounded-lg transition {{ 'bg-amber-700 shadow-inner' if active_tab == 'dispatch' else 'hover:bg-amber-500' }}">
+          <i class="fa-solid fa-truck-fast mr-1"></i> Today's Dispatch
+        </a>
+        <a href="{{ url_for('customers_view') }}" class="px-3 py-2 rounded-lg transition {{ 'bg-amber-700 shadow-inner' if active_tab == 'customers' else 'hover:bg-amber-500' }}">
+          <i class="fa-solid fa-users mr-1"></i> Customers
+        </a>
+        <a href="{{ url_for('billing_view') }}" class="px-3 py-2 rounded-lg transition {{ 'bg-amber-700 shadow-inner' if active_tab == 'billing' else 'hover:bg-amber-500' }}">
+          <i class="fa-solid fa-file-invoice-dollar mr-1"></i> Monthly Bills
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    {% if alert_msg %}
+      <div class="mb-6 p-4 rounded-xl shadow-sm text-sm font-medium {{ 'bg-emerald-50 text-emerald-800 border border-emerald-200' if alert_type == 'success' else 'bg-rose-50 text-rose-800 border border-rose-200' }}">
+        <i class="fa-solid {{ 'fa-circle-check text-emerald-500' if alert_type == 'success' else 'fa-circle-exclamation text-rose-500' }} mr-2"></i>
+        {{ alert_msg }}
+      </div>
+    {% endif %}
+
+    {% if active_tab == 'dispatch' %}
+      <div class="space-y-6">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Kitchen Dispatch Sheet</h2>
+            <p class="text-sm text-slate-500">
+              Showing schedule for <strong class="text-slate-800">{{ dispatch.day_name }}, {{ dispatch.date }}</strong>
+              {% if not dispatch.is_weekday %}
+                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">Weekend - No Deliveries</span>
+              {% endif %}
+            </p>
+          </div>
+          <form method="GET" action="{{ url_for('dispatch_view') }}" class="flex items-center gap-2">
+            <input type="date" name="date" value="{{ dispatch.date }}" class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg shadow-sm transition">Change Date</button>
+            <a href="{{ url_for('dispatch_view') }}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition">Today</a>
+          </form>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Active to Cook & Deliver</p>
+              <h3 class="text-3xl font-extrabold text-emerald-900 mt-1">{{ dispatch.active_count }} <span class="text-base font-medium">tiffins</span></h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl shadow-sm">
+              <i class="fa-solid fa-utensils"></i>
+            </div>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 p-5 rounded-2xl flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider">Paused (Do Not Cook)</p>
+              <h3 class="text-3xl font-extrabold text-amber-900 mt-1">{{ dispatch.paused_count }} <span class="text-base font-medium">tiffins</span></h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl shadow-sm">
+              <i class="fa-solid fa-pause"></i>
+            </div>
+          </div>
+
+          <div class="bg-indigo-50 border border-indigo-200 p-5 rounded-2xl flex items-center justify-between">
+            <div>
+              <p class="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Total Subscribers</p>
+              <h3 class="text-3xl font-extrabold text-indigo-900 mt-1">{{ dispatch.total_subscribed }}</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center text-xl shadow-sm">
+              <i class="fa-solid fa-users"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 bg-emerald-50/50 flex justify-between items-center">
+              <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Active Deliveries ({{ dispatch.active_count }})
+              </h3>
+              <span class="text-xs text-emerald-700 font-medium">Pack & Dispatch</span>
+            </div>
+            <div class="divide-y divide-slate-100 max-h-[450px] overflow-y-auto">
+              {% if dispatch.active_deliveries %}
+                {% for item in dispatch.active_deliveries %}
+                  <div class="p-4 hover:bg-slate-50 transition">
+                    <div class="flex justify-between items-start">
+                      <div>
+                        <h4 class="font-bold text-slate-900 text-base">{{ item.name }}</h4>
+                        <p class="text-xs text-slate-500 font-mono"><i class="fa-solid fa-phone mr-1"></i>{{ item.phone }}</p>
+                      </div>
+                      <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                        {{ item.plan_name }}
+                      </span>
+                    </div>
+                    {% if item.address %}
+                      <p class="text-xs text-slate-600 mt-2 flex items-start gap-1.5">
+                        <i class="fa-solid fa-location-dot text-slate-400 mt-0.5"></i>
+                        <span>{{ item.address }}</span>
+                      </p>
+                    {% endif %}
+                    {% if item.notes %}
+                      <p class="text-xs text-amber-700 mt-1 bg-amber-50 rounded px-2 py-1 inline-block">
+                        <i class="fa-solid fa-note-sticky mr-1"></i>{{ item.notes }}
+                      </p>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="p-8 text-center text-slate-400 text-sm">
+                  No active deliveries scheduled for this date.
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 bg-amber-50/50 flex justify-between items-center">
+              <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Paused Customers ({{ dispatch.paused_count }})
+              </h3>
+              <span class="text-xs text-amber-700 font-medium">Do Not Cook / Zero Charge</span>
+            </div>
+            <div class="divide-y divide-slate-100 max-h-[450px] overflow-y-auto">
+              {% if dispatch.paused_deliveries %}
+                {% for item in dispatch.paused_deliveries %}
+                  <div class="p-4 hover:bg-slate-50 transition">
+                    <div class="flex justify-between items-start">
+                      <div>
+                        <h4 class="font-bold text-slate-900 text-base">{{ item.name }}</h4>
+                        <p class="text-xs text-slate-500 font-mono"><i class="fa-solid fa-phone mr-1"></i>{{ item.phone }}</p>
+                      </div>
+                      <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                        {{ item.plan_name }}
+                      </span>
+                    </div>
+                    <div class="mt-2 text-xs text-slate-600 bg-slate-50 rounded-lg p-2 border border-slate-100">
+                      <p><strong>Reason:</strong> {{ item.reason }}</p>
+                      <p class="text-amber-700 font-medium mt-0.5"><strong>Resumes:</strong> {{ item.resume_date }}</p>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="p-8 text-center text-slate-400 text-sm">
+                  No paused subscriptions on this date.
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    {% if active_tab == 'customers' %}
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-lg font-bold text-slate-900 mb-3">Lookup Customer by Phone</h2>
+            <form method="GET" action="{{ url_for('customers_view') }}" class="flex gap-2">
+              <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+                <input type="text" name="phone" value="{{ search_phone or '' }}" placeholder="Enter phone number (e.g. 9876543210)..." class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+              <button type="submit" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-xl shadow-sm transition">Lookup</button>
+            </form>
+          </div>
+
+          {% if dossier %}
+            {% if dossier.found %}
+              <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-wrap justify-between items-start gap-4 pb-4 border-b border-slate-100">
+                  <div>
+                    <h3 class="text-2xl font-black text-slate-900">{{ dossier.customer.name }}</h3>
+                    <p class="text-sm text-slate-500 font-mono mt-0.5"><i class="fa-solid fa-phone mr-1.5"></i>{{ dossier.customer.phone }}</p>
+                    {% if dossier.customer.address %}
+                      <p class="text-xs text-slate-600 mt-1"><i class="fa-solid fa-map-pin mr-1.5 text-slate-400"></i>{{ dossier.customer.address }}</p>
+                    {% endif %}
+                  </div>
+                  <div>
+                    {% if dossier.status_today.status == 'ACTIVE' %}
+                      <span class="px-3 py-1.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Active Today
+                      </span>
+                    {% elif dossier.status_today.status == 'PAUSED' %}
+                      <span class="px-3 py-1.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span> Paused Today
+                      </span>
+                    {% else %}
+                      <span class="px-3 py-1.5 text-xs font-bold rounded-full bg-slate-100 text-slate-800">
+                        {{ dossier.status_today.status }}
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                {% if dossier.plan and dossier.current_month_bill %}
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-5">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span class="text-[11px] font-semibold text-slate-400 uppercase">Plan</span>
+                      <p class="font-bold text-slate-800 text-sm mt-0.5">{{ dossier.plan.name }}</p>
+                      <p class="text-xs text-slate-500">Rs. {{ dossier.plan.monthly_price }}/mo</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span class="text-[11px] font-semibold text-slate-400 uppercase">Delivered Days</span>
+                      <p class="font-bold text-emerald-700 text-lg mt-0.5">{{ dossier.current_month_bill.delivered_weekdays }} / {{ dossier.current_month_bill.total_month_weekdays }}</p>
+                      <p class="text-xs text-slate-500">Rs. {{ dossier.current_month_bill.daily_rate }}/day</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span class="text-[11px] font-semibold text-slate-400 uppercase">Paused Days</span>
+                      <p class="font-bold text-amber-700 text-lg mt-0.5">{{ dossier.current_month_bill.paused_weekdays }} days</p>
+                      <p class="text-xs text-slate-500">No charge</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                      <span class="text-[11px] font-semibold text-slate-400 uppercase">Pro-Rated Bill</span>
+                      <p class="font-extrabold text-indigo-700 text-lg mt-0.5">Rs. {{ dossier.current_month_bill.total_amount }}</p>
+                      <p class="text-xs text-slate-500">{{ dossier.current_month_bill.month_name }}</p>
+                    </div>
+                  </div>
+                {% endif %}
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 mt-4 space-y-3">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Quick Actions for this Customer</h4>
+                  <div class="flex flex-wrap gap-3">
+                    <form method="POST" action="{{ url_for('action_pause') }}" class="flex-1 min-w-[260px] bg-white p-3 rounded-lg border border-slate-200 space-y-2">
+                      <input type="hidden" name="phone" value="{{ dossier.customer.phone }}">
+                      <span class="text-xs font-bold text-amber-800"><i class="fa-solid fa-pause mr-1"></i>Schedule Pause</span>
+                      <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <label class="text-[10px] text-slate-500 block">From</label>
+                          <input type="date" name="from_date" required class="w-full px-2 py-1 border rounded">
+                        </div>
+                        <div>
+                          <label class="text-[10px] text-slate-500 block">To (Optional)</label>
+                          <input type="date" name="to_date" class="w-full px-2 py-1 border rounded">
+                        </div>
+                      </div>
+                      <input type="text" name="reason" placeholder="Reason (e.g. Travel, Sick)..." class="w-full px-2 py-1 text-xs border rounded">
+                      <button type="submit" class="w-full py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold transition">Apply Pause</button>
+                    </form>
+
+                    <form method="POST" action="{{ url_for('action_resume') }}" class="flex-1 min-w-[200px] bg-white p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
+                      <input type="hidden" name="phone" value="{{ dossier.customer.phone }}">
+                      <div>
+                        <span class="text-xs font-bold text-emerald-800"><i class="fa-solid fa-play mr-1"></i>Resume Delivery</span>
+                        <p class="text-xs text-slate-500 mt-1">Clears active/indefinite pause.</p>
+                        <div class="mt-2 text-xs">
+                          <label class="text-[10px] text-slate-500 block">Effective Resume Date</label>
+                          <input type="date" name="resume_date" class="w-full px-2 py-1 border rounded">
+                        </div>
+                      </div>
+                      <button type="submit" class="w-full mt-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition">Resume Now</button>
+                    </form>
+                  </div>
+                </div>
+
+                {% if dossier.pauses %}
+                  <div class="mt-6">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pause History</h4>
+                    <div class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden text-xs">
+                      {% for p in dossier.pauses %}
+                        <div class="p-3 bg-white flex justify-between items-center">
+                          <div>
+                            <span class="font-semibold text-slate-800">{{ p.start_date }} to {{ p.end_date or 'Indefinite' }}</span>
+                            <span class="text-slate-500 ml-2">({{ p.reason or 'No reason provided' }})</span>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center text-slate-500">
+                <i class="fa-solid fa-user-slash text-3xl text-slate-300 mb-2"></i>
+                <p>No customer found with phone <strong>{{ search_phone }}</strong>.</p>
+              </div>
+            {% endif %}
+          {% endif %}
+
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+              <h3 class="font-bold text-slate-800">All Registered Customers ({{ all_customers|length }})</h3>
+            </div>
+            <div class="divide-y divide-slate-100 max-h-[350px] overflow-y-auto">
+              {% for cust in all_customers %}
+                <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition">
+                  <div>
+                    <h4 class="font-bold text-slate-800">{{ cust.name }}</h4>
+                    <p class="text-xs text-slate-500 font-mono">{{ cust.phone }}</p>
+                  </div>
+                  <a href="{{ url_for('customers_view', phone=cust.phone) }}" class="px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition">
+                    View Profile &rarr;
+                  </a>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-user-plus text-amber-600"></i> Subscribe Customer
+            </h3>
+            <form method="POST" action="{{ url_for('action_subscribe') }}" class="space-y-4 text-xs">
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Full Name</label>
+                <input type="text" name="name" required placeholder="e.g. Sunita Mehta" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Phone Number (Unique ID)</label>
+                <input type="text" name="phone" required placeholder="e.g. 9876543210" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Tiffin Plan</label>
+                <select name="plan_id" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                  {% for p in plans %}
+                    <option value="{{ p.id }}">{{ p.name }} (Rs. {{ p.monthly_price }}/mo)</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Start Date</label>
+                <input type="date" name="start_date" value="{{ today_str }}" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Delivery Address</label>
+                <textarea name="address" rows="2" placeholder="Building, Flat, Landmark..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+              </div>
+              <div>
+                <label class="font-semibold text-slate-700 block mb-1">Dietary Preferences / Notes</label>
+                <input type="text" name="notes" placeholder="e.g. Less spicy, no onion..." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+              <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow transition text-sm">
+                Save & Subscribe
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    {% if active_tab == 'billing' %}
+      <div class="space-y-6">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4 no-print">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">Month-End Pro-Rated Billing</h2>
+            <p class="text-sm text-slate-500">Every customer is billed only for weekdays lunch was delivered.</p>
+          </div>
+          <form method="GET" action="{{ url_for('billing_view') }}" class="flex items-center gap-2">
+            <input type="month" name="month" value="{{ selected_month }}" class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg shadow-sm transition">Generate Statements</button>
+          </form>
+        </div>
+
+        {% if single_bill %}
+          <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-3xl mx-auto">
+            <div class="flex justify-between items-start border-b border-slate-200 pb-6">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-3xl">🍱</span>
+                  <span class="font-black text-xl text-slate-900">Annapurna Tiffin Service</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Fresh Home-Cooked Lunch Delivered Every Weekday</p>
+              </div>
+              <div class="text-right">
+                <span class="px-3 py-1 bg-amber-100 text-amber-900 text-xs font-extrabold rounded-full uppercase">Tax Invoice</span>
+                <p class="text-xs text-slate-400 mt-1">Billing Month: <strong>{{ single_bill.month_name }} {{ single_bill.billing_year }}</strong></p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 py-6 border-b border-slate-100 text-sm">
+              <div>
+                <span class="text-xs font-semibold text-slate-400 uppercase">Billed To</span>
+                <h3 class="font-bold text-slate-900 text-base mt-1">{{ single_bill.customer_name }}</h3>
+                <p class="text-xs text-slate-600 font-mono"><i class="fa-solid fa-phone mr-1"></i>{{ single_bill.customer_phone }}</p>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-semibold text-slate-400 uppercase">Plan Details</span>
+                <h4 class="font-bold text-slate-800 text-sm mt-1">{{ single_bill.plan_name }}</h4>
+                <p class="text-xs text-slate-500">Monthly Plan Price: Rs. {{ "%.2f"|format(single_bill.plan_monthly_price) }}</p>
+              </div>
+            </div>
+
+            <div class="py-6 border-b border-slate-100">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="text-slate-400 border-b border-slate-100 pb-2 text-left">
+                    <th class="py-2">Component</th>
+                    <th class="py-2 text-center">Days</th>
+                    <th class="py-2 text-right">Rate</th>
+                    <th class="py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr>
+                    <td class="py-2.5 font-medium text-slate-700">Total Weekdays in {{ single_bill.month_name }}</td>
+                    <td class="py-2.5 text-center">{{ single_bill.total_month_weekdays }}</td>
+                    <td class="py-2.5 text-right text-slate-400">-</td>
+                    <td class="py-2.5 text-right text-slate-400">-</td>
+                  </tr>
+                  <tr class="text-amber-700 bg-amber-50/50">
+                    <td class="py-2.5 font-medium pl-2">Paused Days (Traveling/Festival)</td>
+                    <td class="py-2.5 text-center font-bold">- {{ single_bill.paused_weekdays }}</td>
+                    <td class="py-2.5 text-right text-emerald-600 font-medium">100% credited</td>
+                    <td class="py-2.5 text-right font-medium">Rs. 0.00</td>
+                  </tr>
+                  <tr class="font-bold text-slate-900 bg-emerald-50/50">
+                    <td class="py-2.5 pl-2">Weekdays Actually Delivered</td>
+                    <td class="py-2.5 text-center text-emerald-700 text-sm">{{ single_bill.delivered_weekdays }}</td>
+                    <td class="py-2.5 text-right text-slate-600">Rs. {{ "%.2f"|format(single_bill.daily_rate) }}/meal</td>
+                    <td class="py-2.5 text-right text-emerald-800 text-sm">Rs. {{ "%.2f"|format(single_bill.total_amount) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="py-4 flex justify-between items-center">
+              <div class="no-print">
+                <button onclick="window.print()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition">
+                  <i class="fa-solid fa-print mr-1.5"></i> Print Invoice
+                </button>
+                <a href="{{ url_for('billing_view', month=selected_month) }}" class="ml-2 px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800">
+                  &larr; Back to All Bills
+                </a>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-bold text-slate-400 uppercase">Total Amount Due</span>
+                <h2 class="text-3xl font-black text-indigo-900">Rs. {{ "%.2f"|format(single_bill.total_amount) }}</h2>
+              </div>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-slate-200">
+              <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Itemized Daily Delivery Audit</h4>
+              <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2 text-[11px]">
+                {% for d in single_bill.days_breakdown %}
+                  {% if d.status.value != 'WEEKEND' %}
+                    <div class="p-2 rounded-lg border {{ 'bg-emerald-50 border-emerald-200 text-emerald-900' if d.status.value == 'DELIVERED' else 'bg-amber-50 border-amber-200 text-amber-900' }}">
+                      <span class="block font-bold">{{ d.date.strftime('%d %b') }} ({{ d.day_name[:3] }})</span>
+                      <span class="text-[10px] font-semibold">{{ d.status.value }}</span>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+              <h3 class="font-bold text-slate-900">Summary for {{ bills[0].month_name if bills else '' }} {{ year }}</h3>
+              <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg">
+                Total Collection: Rs. {{ "%.2f"|format(grand_total) }}
+              </span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs text-left">
+                <thead class="bg-slate-50 text-slate-400 uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th class="px-5 py-3">Customer</th>
+                    <th class="px-5 py-3">Phone</th>
+                    <th class="px-5 py-3">Plan</th>
+                    <th class="px-5 py-3 text-center">Delivered / Total</th>
+                    <th class="px-5 py-3 text-center">Paused</th>
+                    <th class="px-5 py-3 text-right">Daily Rate</th>
+                    <th class="px-5 py-3 text-right font-bold text-slate-700">Total Bill</th>
+                    <th class="px-5 py-3 text-center no-print">Invoice</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  {% for b in bills %}
+                    <tr class="hover:bg-slate-50 transition">
+                      <td class="px-5 py-4 font-bold text-slate-900">{{ b.customer_name }}</td>
+                      <td class="px-5 py-4 font-mono text-slate-600">{{ b.customer_phone }}</td>
+                      <td class="px-5 py-4 text-slate-700">{{ b.plan_name }}</td>
+                      <td class="px-5 py-4 text-center font-bold text-emerald-700">{{ b.delivered_weekdays }} / {{ b.total_month_weekdays }}</td>
+                      <td class="px-5 py-4 text-center font-semibold text-amber-700">{{ b.paused_weekdays }} days</td>
+                      <td class="px-5 py-4 text-right text-slate-500">Rs. {{ "%.2f"|format(b.daily_rate) }}</td>
+                      <td class="px-5 py-4 text-right font-black text-indigo-900 text-sm">Rs. {{ "%.2f"|format(b.total_amount) }}</td>
+                      <td class="px-5 py-4 text-center no-print">
+                        <a href="{{ url_for('billing_view', month=selected_month, phone=b.customer_phone) }}" class="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded font-semibold transition">
+                          View &rarr;
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </main>
+</body>
+</html>
