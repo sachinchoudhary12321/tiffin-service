@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}AI Reasoning Assistant - Annapurna Tiffin{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+  <!-- Header Banner -->
+  <div class="bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+    <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div>
+        <div class="inline-flex items-center space-x-2 bg-amber-500/30 border border-amber-300/40 rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase text-amber-100 mb-3">
+          <i class="fa-solid fa-shield-check text-emerald-300 mr-1"></i> 100% Grounded &bull; Zero Hallucination
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-tight">Annapurna Intelligent Assistant</h1>
+        <p class="text-amber-100 text-sm mt-1 max-w-xl">
+          Ask questions about meal schemes, pro-rated billing formulas, vacation pause rules, or inspect your live account statement with step-by-step transparent reasoning.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2.5 rounded-2xl text-xs">
+        <i class="fa-solid fa-calculator text-amber-300 text-lg"></i>
+        <div>
+          <div class="font-bold text-white">Mathematical Reasoning</div>
+          <div class="text-amber-200">Grounded in company database</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Chat Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Sidebar: Verified Schemes & Grounding Basis -->
+    <div class="space-y-6 lg:col-span-1">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center">
+          <i class="fa-solid fa-badge-check text-emerald-500 mr-2"></i> Verified Company Schemes
+        </h2>
+        <div class="space-y-2.5 text-xs">
+          <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-200/70">
+            <div class="font-bold text-amber-900 flex justify-between">
+              <span>Standard Veg</span>
+              <span class="text-emerald-700">Rs. 3,000 / mo</span>
+            </div>
+            <p class="text-slate-600 mt-1">4 Rotis, Dal, Seasonal Sabzi, Rice, Salad (Mon–Fri)</p>
+          </div>
+          <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-200/70">
+            <div class="font-bold text-amber-900 flex justify-between">
+              <span>Special Deluxe Veg</span>
+              <span class="text-emerald-700">Rs. 3,800 / mo</span>
+            </div>
+            <p class="text-slate-600 mt-1">Includes Paneer item + Dessert twice a week</p>
+          </div>
+          <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-200/70">
+            <div class="font-bold text-amber-900 flex justify-between">
+              <span>Non-Veg Delight</span>
+              <span class="text-emerald-700">Rs. 4,200 / mo</span>
+            </div>
+            <p class="text-slate-600 mt-1">Chicken / Egg curry twice a week (Wed & Fri)</p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-2 flex items-center">
+            <i class="fa-solid fa-scale-balanced text-amber-600 mr-1.5"></i> Strict Grounding Rules
+          </h3>
+          <ul class="text-[11px] text-slate-600 space-y-1.5 list-disc list-inside">
+            <li><span class="font-semibold text-slate-800">Weekday Deliveries:</span> Mon–Fri (Sat & Sun always non-billable).</li>
+            <li><span class="font-semibold text-slate-800">Exact Pro-Ration:</span> Month weekdays divisor (20–23 days, not 30).</li>
+            <li><span class="font-semibold text-slate-800">No Speculation:</span> Only answers questions within service scope.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Quick Starter Prompts -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3 flex items-center">
+          <i class="fa-solid fa-lightbulb text-amber-500 mr-1.5"></i> Instant Prompt Suggestions
+        </h2>
+        <div class="space-y-2">
+          <button onclick="sendQuickPrompt('What are your monthly meal schemes and prices?')" class="w-full text-left p-2.5 rounded-xl border border-slate-100 hover:border-amber-300 hover:bg-amber-50/50 text-xs text-slate-700 transition flex items-center justify-between group">
+            <span>🍱 What meal plans are available?</span>
+            <i class="fa-solid fa-arrow-right text-[10px] text-slate-300 group-hover:text-amber-600"></i>
+          </button>
+          <button onclick="sendQuickPrompt('How is pro-rated billing mathematically calculated?')" class="w-full text-left p-2.5 rounded-xl border border-slate-100 hover:border-amber-300 hover:bg-amber-50/50 text-xs text-slate-700 transition flex items-center justify-between group">
+            <span>📐 How does pro-rating work?</span>
+            <i class="fa-solid fa-arrow-right text-[10px] text-slate-300 group-hover:text-amber-600"></i>
+          </button>
+          <button onclick="sendQuickPrompt('What happens if I pause Friday to Monday?')" class="w-full text-left p-2.5 rounded-xl border border-slate-100 hover:border-amber-300 hover:bg-amber-50/50 text-xs text-slate-700 transition flex items-center justify-between group">
+            <span>⏸️ Friday to Monday pause policy</span>
+            <i class="fa-solid fa-arrow-right text-[10px] text-slate-300 group-hover:text-amber-600"></i>
+          </button>
+          <button onclick="sendQuickPrompt('If I pause for 5 days on standard veg, what will my bill be?')" class="w-full text-left p-2.5 rounded-xl border border-slate-100 hover:border-amber-300 hover:bg-amber-50/50 text-xs text-slate-700 transition flex items-center justify-between group">
+            <span>🧮 Simulate 5 paused days</span>
+            <i class="fa-solid fa-arrow-right text-[10px] text-slate-300 group-hover:text-amber-600"></i>
+          </button>
+          <button onclick="sendQuickPrompt('Check my account and bill for 9876543210')" class="w-full text-left p-2.5 rounded-xl border border-slate-100 hover:border-amber-300 hover:bg-amber-50/50 text-xs text-slate-700 transition flex items-center justify-between group">
+            <span>👤 Lookup bill for 9876543210</span>
+            <i class="fa-solid fa-arrow-right text-[10px] text-slate-300 group-hover:text-amber-600"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Area: Interactive Chat Box -->
+    <div class="lg:col-span-2 flex flex-col bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden h-[680px]">
+      <!-- Chat Header -->
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold shadow-sm">
+            <i class="fa-solid fa-robot text-sm"></i>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-slate-800 leading-none">Annapurna AI Companion</h2>
+            <span class="text-[11px] text-emerald-600 font-medium flex items-center mt-0.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+              Live Reasoning &bull; Anti-Hallucination Active
+            </span>
+          </div>
+        </div>
+        <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-slate-600 flex items-center space-x-1 transition px-2 py-1 rounded-lg hover:bg-slate-200/60">
+          <i class="fa-solid fa-trash text-[10px]"></i>
+          <span>Clear</span>
+        </button>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="messagesContainer" class="flex-grow p-6 overflow-y-auto space-y-4 text-sm">
+        <!-- Default Bot Welcome -->
+        <div class="flex items-start space-x-3">
+          <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 shadow-sm">
+            🍱
+          </div>
+          <div class="space-y-2 max-w-xl">
+            <div class="bg-amber-50/70 border border-amber-200/70 rounded-2xl rounded-tl-sm p-4 text-slate-800 leading-relaxed">
+              <p class="font-bold text-amber-900 mb-1">Namaste! Welcome to Annapurna Tiffin Assistant.</p>
+              <p class="text-xs text-slate-700">
+                I am your transparent AI assistant. Everything I tell you is computed directly from our company meal schemes, verified calendar rules, and live subscriber database.
+              </p>
+              <p class="text-xs text-slate-600 mt-2">
+                Ask me any question below, simulate pauses, or look up your phone number.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-2">
+        <div class="flex items-center space-x-2 text-xs text-slate-500 mb-1 px-1">
+          <i class="fa-solid fa-phone text-slate-400"></i>
+          <span>Optional phone lookup:</span>
+          <input type="text" id="phoneContext" placeholder="e.g. 9876543210" class="border border-slate-200 rounded-md px-2 py-0.5 text-xs w-32 focus:outline-none focus:border-amber-500 bg-white">
+        </div>
+
+        <form id="chatForm" onsubmit="submitChatMessage(event)" class="flex items-center space-x-2">
+          <input 
+            type="text" 
+            id="chatInput" 
+            placeholder="Ask about meal schemes, formulas, pauses, or phone lookup..." 
+            class="flex-grow px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition shadow-inner"
+            required
+            autocomplete="off"
+          />
+          <button 
+            type="submit" 
+            id="sendBtn" 
+            class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-2xl font-bold transition flex items-center space-x-1.5 shadow-md hover:shadow-lg disabled:opacity-50"
+          >
+            <span>Ask</span>
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function formatMarkdown(text) {
+    if (!text) return '';
+    let html = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // Headings
+    html = html.replace(/### (.*?)\n/g, '<h4 class="font-bold text-slate-800 text-sm mt-3 mb-1">$1</h4>');
+    html = html.replace(/## (.*?)\n/g, '<h3 class="font-bold text-slate-800 text-base mt-3 mb-1">$1</h3>');
+    html = html.replace(/# (.*?)\n/g, '<h2 class="font-black text-slate-900 text-lg mt-3 mb-1">$1</h2>');
+
+    // Bold & italic
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>');
+    html = html.replace(/_(.*?)_/g, '<em class="italic text-slate-600">$1</em>');
+
+    // Code tags
+    html = html.replace(/`([^`]+)`/g, '<code class="bg-amber-100/70 text-amber-900 px-1 py-0.5 rounded text-xs font-mono">$1</code>');
+
+    // Bullet points
+    html = html.replace(/• (.*?)(?=(\n|$))/g, '<li class="ml-4 list-disc text-slate-700 text-xs leading-relaxed">$1</li>');
+
+    // Math formulas
+    html = html.replace(/\$\$(.*?)\$\$/g, '<div class="my-2 p-2 bg-amber-50/80 border border-amber-200/80 rounded-lg text-xs font-mono font-bold text-amber-950 text-center">$1</div>');
+    html = html.replace(/\$(.*?)\$/g, '<code class="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono text-xs">$1</code>');
+
+    // Line breaks
+    html = html.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+
+    return html;
+  }
+
+  function appendUserMessage(text) {
+    const container = document.getElementById('messagesContainer');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'flex items-start justify-end space-x-3';
+    msgDiv.innerHTML = `
+      <div class="bg-amber-600 text-white rounded-2xl rounded-tr-sm p-4 text-sm max-w-lg shadow-sm leading-relaxed">
+        ${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+      </div>
+      <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 shadow-sm">
+        <i class="fa-solid fa-user"></i>
+      </div>
+    `;
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function appendBotMessage(data) {
+    const container = document.getElementById('messagesContainer');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'flex items-start space-x-3';
+
+    let reasoningHtml = '';
+    if (data.reasoning && data.reasoning.length > 0) {
+      reasoningHtml = `
+        <details class="mt-3 bg-amber-50/90 border border-amber-200/80 rounded-xl p-2.5 text-xs text-amber-950">
+          <summary class="cursor-pointer font-bold text-amber-900 flex items-center space-x-1.5 select-none">
+            <i class="fa-solid fa-brain text-amber-600"></i>
+            <span>Transparent Reasoning Steps (${data.reasoning.length} verified checkpoints)</span>
+          </summary>
+          <ol class="mt-2 pl-4 list-decimal space-y-1 text-slate-700 text-[11px]">
+            ${data.reasoning.map(r => `<li>${r}</li>`).join('')}
+          </ol>
+        </details>
+      `;
+    }
+
+    let factsHtml = '';
+    if (data.grounded_facts && data.grounded_facts.length > 0) {
+      factsHtml = `
+        <div class="mt-2 flex flex-wrap gap-1.5 items-center">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Grounded Facts:</span>
+          ${data.grounded_facts.map(f => `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-medium"><i class="fa-solid fa-check text-[9px] mr-1"></i>${f}</span>`).join('')}
+        </div>
+      `;
+    }
+
+    msgDiv.innerHTML = `
+      <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 shadow-sm">
+        🍱
+      </div>
+      <div class="space-y-2 max-w-xl">
+        <div class="bg-white border border-slate-200 rounded-2xl rounded-tl-sm p-4 text-slate-800 leading-relaxed shadow-sm">
+          <div>${formatMarkdown(data.reply)}</div>
+          ${reasoningHtml}
+          ${factsHtml}
+        </div>
+      </div>
+    `;
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function appendLoading() {
+    const container = document.getElementById('messagesContainer');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'botLoadingIndicator';
+    loadingDiv.className = 'flex items-start space-x-3';
+    loadingDiv.innerHTML = `
+      <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 shadow-sm">
+        🍱
+      </div>
+      <div class="bg-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 text-slate-500 text-xs flex items-center space-x-2">
+        <i class="fa-solid fa-spinner fa-spin text-amber-600"></i>
+        <span>Reasoning against company scheme facts...</span>
+      </div>
+    `;
+    container.appendChild(loadingDiv);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function removeLoading() {
+    const loader = document.getElementById('botLoadingIndicator');
+    if (loader) loader.remove();
+  }
+
+  async function submitChatMessage(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('chatInput');
+    const phoneInput = document.getElementById('phoneContext');
+    const sendBtn = document.getElementById('sendBtn');
+    const message = input.value.trim();
+    const phone = phoneInput ? phoneInput.value.trim() : null;
+
+    if (!message) return;
+
+    appendUserMessage(message);
+    input.value = '';
+    sendBtn.disabled = true;
+    appendLoading();
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message, phone: phone })
+      });
+
+      const data = await response.json();
+      removeLoading();
+      sendBtn.disabled = false;
+
+      if (data.success) {
+        appendBotMessage(data);
+      } else {
+        appendBotMessage({
+          reply: `⚠️ Error: ${data.error || 'Unable to process question.'}`,
+          reasoning: ['Request failed or API returned an error response.'],
+          grounded_facts: []
+        });
+      }
+    } catch (err) {
+      removeLoading();
+      sendBtn.disabled = false;
+      appendBotMessage({
+        reply: `⚠️ Network error: Could not reach Annapurna Assistant. (${err.message})`,
+        reasoning: ['Failed to execute HTTP POST to /api/chat.'],
+        grounded_facts: []
+      });
+    }
+  }
+
+  function sendQuickPrompt(promptText) {
+    document.getElementById('chatInput').value = promptText;
+    submitChatMessage(null);
+  }
+
+  function clearChat() {
+    const container = document.getElementById('messagesContainer');
+    container.innerHTML = `
+      <div class="flex items-start space-x-3">
+        <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 shadow-sm">
+          🍱
+        </div>
+        <div class="space-y-2 max-w-xl">
+          <div class="bg-amber-50/70 border border-amber-200/70 rounded-2xl rounded-tl-sm p-4 text-slate-800 leading-relaxed">
+            <p class="font-bold text-amber-900 mb-1">Chat history cleared.</p>
+            <p class="text-xs text-slate-600">
+              Ask any question below to see live transparent reasoning grounded in Annapurna Tiffin schemes.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+</script>
+{% endblock %}

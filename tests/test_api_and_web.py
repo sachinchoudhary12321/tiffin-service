@@ -3,6 +3,7 @@ import pytest
 from datetime import date
 from web.app import app
 import web.app as web_module
+from tiffin.chatbot import TiffinChatbot
 from tiffin.service import TiffinService
 
 
@@ -10,6 +11,7 @@ from tiffin.service import TiffinService
 def client(tmp_path):
     test_db = str(tmp_path / "test_api_isolated.db")
     web_module.service = TiffinService(test_db)
+    web_module.chatbot = TiffinChatbot(web_module.service)
     app.config["TESTING"] = True
     with app.test_client() as client:
         yield client

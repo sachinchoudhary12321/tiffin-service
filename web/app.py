@@ -16,6 +16,7 @@ from flask import Flask, flash, jsonify, redirect, render_template, request, Res
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tiffin.calendar_utils import format_date, parse_date
+from tiffin.chatbot import TiffinChatbot
 from tiffin.models import DayStatus
 from tiffin.service import TiffinService
 
@@ -24,6 +25,7 @@ app.secret_key = os.environ.get("SECRET_KEY", "tiffin-auriga-secret-key-2026")
 
 DB_PATH = os.environ.get("TIFFIN_DB", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tiffin.db")))
 service = TiffinService(DB_PATH)
+chatbot = TiffinChatbot(service)
 
 
 def get_current_user():
@@ -271,6 +273,13 @@ def my_bill_view():
         error=error,
         current_user=get_current_user(),
     )
+
+
+@app.route("/assistant")
+def assistant_view():
+    """Interactive Zero-Hallucination AI Assistant view."""
+    current_user = get_current_user()
+    return render_template("assistant.html", current_user=current_user)
 
 
 @app.route("/export/bills.csv")
@@ -599,6 +608,33 @@ def api_single_bill(phone):
         }), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    """
+    Interactive AI Assistant Endpoint.
+    Provides step-by-step mathematical reasoning grounded strictly
+    in verified company schemes and live database records with zero hallucination.
+    """
+    data = request.get_json() or {}
+    message = data.get("message", "").strip()
+    phone = data.get("phone", "").strip() or None
+
+    if not message:
+        return jsonify({"success": False, "error": "Message parameter is required."}), 400
+
+    try:
+        result = chatbot.answer_query(message, phone=phone)
+        return jsonify({
+            "success": True,
+            "reply": result["reply"],
+            "reasoning": result["reasoning"],
+            "intent": result["intent"],
+            "grounded_facts": result["grounded_facts"],
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 if __name__ == "__main__":

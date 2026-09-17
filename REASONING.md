@@ -214,3 +214,28 @@ Beyond the baseline requirements, we implemented four major user experience enha
    - *Rationale*: Reduces repetitive customer inquiries ("How much do I owe this month?").
    - *Solution*: A public, secure customer portal where subscribers simply enter their phone number to see their own attendance calendar and pro-rated bill without needing admin credentials.
 
+5. **Zero-Hallucination AI Reasoning Assistant (`/assistant`, `/api/chat`)**:
+   - *Rationale*: Generic LLMs are notorious for hallucinating prices, inventing non-existent discounts, and making mathematical mistakes on pro-ration (like dividing by 30 days instead of actual weekdays). This causes serious customer mistrust and business disputes.
+   - *Architecture*:
+     - **Deterministic Grounding Layer**: All knowledge is sourced strictly from verified company schemas in SQLite (Standard Veg: Rs. 3,000, Deluxe: Rs. 3,800, Non-Veg: Rs. 4,200), calendar weekday calculations, and real-time database state.
+     - **Transparent Reasoning Steps**: For every response, the assistant exposes its chain of reasoning (e.g., verified active plans, calculated daily rate, absence credit breakdown).
+     - **Grounded Fact Tagging**: Every answer outputs explicit tags of the verified facts utilized in the deduction.
+     - **Phone Lookup Integration**: Users can ask about their personal account (or enter their phone) and get live month-to-date attendance metrics directly from the service layer.
+     - **Hypothetical Scenario Simulator**: Allows customers to simulate vacations ("If I pause 5 days on standard veg...") and see step-by-step arithmetic proving fairness.
+     - **Strict Fallback**: Out-of-domain queries receive guided, polite boundaries rather than speculative or fabricated responses.
+
+---
+
+## 8. Test Execution Summary
+
+All **38 automated tests** across six test suites execute in ~4.5 seconds with a 100% pass rate:
+```
+============================= 38 passed in 4.69s ==============================
+- tests/test_billing.py (7 passed)
+- tests/test_calendar.py (5 passed)
+- tests/test_lifecycle.py (5 passed)
+- tests/test_auth_and_search.py (3 passed)
+- tests/test_api_and_web.py (10 passed)
+- tests/test_chatbot.py (8 passed)
+```
+

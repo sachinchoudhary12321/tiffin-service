@@ -15,10 +15,11 @@ Customers subscribe to a monthly meal plan for weekday lunch deliveries, pause d
 - **Search, Pagination & Sorting**: Case-insensitive search across customer names, phone numbers, and addresses with dynamic sorting (`asc`/`desc`) and multi-page pagination.
 - **WhatsApp 1-Click Bill Sharing**: Instant pre-formatted WhatsApp billing notification generator (`wa.me`) with line-by-line breakdown for easy customer sharing.
 - **1-Click CSV Exports**: One-click download of Monthly Billing Ledgers (`/export/bills.csv`) and Daily Delivery Run-Sheets (`/export/dispatch.csv`).
+- **Interactive Zero-Hallucination AI Assistant (`/assistant`, `/api/chat`)**: Transparent conversational engine with step-by-step mathematical reasoning, strictly grounded in verified company meal schemes and database records without hallucination.
 - **Customer Self-Service Bill Portal (`/my-bill`)**: Public portal where subscribers check their personal live attendance calendar and verified pro-rated bill by phone number.
 - **Kitchen Meal Plan Matrix & Dietary Alerts**: Real-time kitchen tally of meal plans (Standard Veg, Deluxe Veg, Non-Veg) and special dietary instructions (no onion-garlic, extra roti, mild spice).
 - **One-Page Product Landing Page**: Integrated showcase covering What it is, Key features, Target audience, How it helps, and Three features to build next.
-- **Automated Test Suite**: 30 unit, integration, and API tests with 100% pass rate.
+- **Automated Test Suite**: 38 comprehensive unit, integration, and API tests with 100% pass rate.
 
 ---
 
@@ -77,6 +78,9 @@ pytest tests/test_auth_and_search.py -v
 
 # REST API and Web view tests
 pytest tests/test_api_and_web.py -v
+
+# Zero-hallucination AI reasoning chatbot tests
+pytest tests/test_chatbot.py -v
 ```
 
 ### Debugging Tips:
@@ -435,6 +439,40 @@ Retrieve detailed pro-rated bill with itemized daily attendance audit.
         }
       ]
     }
+  }
+  ```
+
+---
+
+### AI Reasoning Assistant Endpoint
+
+#### `POST /api/chat`
+Ask the interactive conversational assistant questions about meal schemes, pro-rated billing logic, pause policies, hypothetical scenario simulations, or live customer phone account lookups. Grounded strictly in company rules with zero hallucination and transparent step-by-step reasoning.
+- **Request Body**:
+  ```json
+  {
+    "message": "If I pause for 5 days on standard veg, how much will I pay?",
+    "phone": "9876543210"
+  }
+  ```
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "intent": "simulation",
+    "reply": "🧮 Step-by-Step Scenario Simulation:\n\nIf you subscribe to the Standard Vegetarian (Rs. 3000.00/month) and pause for 5 weekdays:\n\n1. Total Weekdays in Month: 22 days\n2. Daily Rate: Rs. 3000.00 / 22 = Rs. 136.36/meal\n3. Lunches Delivered: 22 - 5 = 17 days\n4. Absence Credit: 5 x 136.36 = Rs. 681.82\n\n💰 Your Pro-Rated Bill Would Be: Rs. 2318.18\n(You only pay for the 17 meals actually delivered to you).",
+    "reasoning": [
+      "Simulating scenario: 5 paused weekdays on Standard Vegetarian.",
+      "Baseline: Standard month with 22 working weekdays.",
+      "Formula: (17 delivered days / 22 total weekdays) * Rs. 3000.0.",
+      "Resulting calculated bill: Rs. 2318.18."
+    ],
+    "grounded_facts": [
+      "Simulated plan: Standard Vegetarian",
+      "Paused days: 5",
+      "Delivered days: 17",
+      "Simulated bill: Rs. 2318.18"
+    ]
   }
   ```
 
