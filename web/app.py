@@ -35,6 +35,13 @@ def get_current_user():
     return None
 
 
+def get_current_customer():
+    phone = session.get("customer_phone")
+    if phone:
+        return service.storage.get_customer(phone)
+    return None
+
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -43,6 +50,24 @@ def login_required(f):
             return redirect(url_for("login_view", next=request.url))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def customer_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not get_current_customer():
+            flash("Please enter your phone number to access your customer dashboard.", "info")
+            return redirect(url_for("customer_login_view", next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@app.context_processor
+def inject_global_context():
+    return {
+        "current_user": get_current_user(),
+        "current_customer": get_current_customer(),
+    }
 
 
 # ==========================================
@@ -95,6 +120,161 @@ def logout_view():
     session.clear()
     flash("You have been logged out.", "info")
     return redirect(url_for("landing_view"))
+
+
+# ==========================================
+# CUSTOMER PORTAL & SUBSCRIPTION ROUTES
+# ==========================================
+
+@app.route("/subscribe", methods=["GET", "POST"])
+def customer_subscribe_view():
+    """Online subscription page for customers who want to take the tiffin service."""
+    plans = service.list_plans()
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        phone = request.form.get("phone", "").strip()
+        plan_id = request.form.get("plan_id", "").strip()
+        address = request.form.get("address", "").strip()
+        notes = request.form.get("notes", "").strip()
+        start_date_str = request.form.get("start_date", "").strip()
+
+        if not name or not phone or not plan_id:
+            flash("Please fill in all required fields (Name, Phone, Plan).", "error")
+            return render_template("customer_subscribe.html", plans=plans, today_str=format_date(date.today()))
+
+        start_date = parse_date(start_date_str) if start_date_str else date.today()
+
+        try:
+            sub = service.subscribe(
+                name=name,
+                phone=phone,
+                plan_id=plan_id,
+                address=address,
+                notes=notes,
+                start_date=start_date,
+            )
+            # Log the customer into session
+            session["customer_phone"] = sub.customer_phone
+            session["customer_name"] = name
+            plan = service.get_plan(plan_id)
+            plan_name = plan.name if plan else plan_id
+            flash(f"Welcome to Annapurna Tiffin, {name}! Your subscription to {plan_name} has been activated.", "success")
+            return redirect(url_for("customer_dashboard_view"))
+        except Exception as e:
+            flash(f"Error activating subscription: {str(e)}", "error")
+
+    return render_template("customer_subscribe.html", plans=plans, today_str=format_date(date.today()))
+
+
+@app.route("/customer/login", methods=["GET", "POST"])
+def customer_login_view():
+    """Phone-based login for subscribers wanting to access their personal tiffin portal."""
+    if request.method == "POST":
+        phone = request.form.get("phone", "").strip()
+        if not phone:
+            flash("Please enter your registered phone number.", "error")
+            return render_template("customer_login.html")
+
+        # Lookup customer
+        lookup = service.lookup_customer(phone)
+        if lookup["found"]:
+            customer = lookup["customer"]
+            session["customer_phone"] = customer.phone
+            session["customer_name"] = customer.name
+            flash(f"Welcome back, {customer.name}!", "success")
+            next_url = request.args.get("next") or url_for("customer_dashboard_view")
+            return redirect(next_url)
+        else:
+            flash(f"No active subscription found for phone '{phone}'. Please subscribe to begin lunch deliveries.", "warning")
+            return render_template("customer_login.html", phone=phone, not_found=True)
+
+    return render_template("customer_login.html")
+
+
+@app.route("/customer/logout")
+def customer_logout_view():
+    """Logout subscriber from customer portal."""
+    session.pop("customer_phone", None)
+    session.pop("customer_name", None)
+    flash("You have been logged out of your customer portal.", "info")
+    return redirect(url_for("landing_view"))
+
+
+@app.route("/customer/dashboard")
+@customer_login_required
+def customer_dashboard_view():
+    """Customer self-service dashboard: view status, pause/resume, pro-rated bill."""
+    customer = get_current_customer()
+    dossier = service.lookup_customer(customer.phone)
+    
+    month_str = request.args.get("month")
+    if not month_str:
+        today = date.today()
+        month_str = f"{today.year:04d}-{today.month:02d}"
+
+    year, month = map(int, month_str.split("-"))
+    bill = None
+    whatsapp_link = None
+    try:
+        bill = service.generate_bill(customer.phone, year, month)
+        whatsapp_link = service.generate_whatsapp_message(bill)
+    except Exception:
+        pass
+
+    plans = service.list_plans()
+    return render_template(
+        "customer_dashboard.html",
+        customer=customer,
+        dossier=dossier,
+        bill=bill,
+        month=month_str,
+        whatsapp_link=whatsapp_link,
+        today_str=format_date(date.today()),
+        plans=plans,
+    )
+
+
+@app.route("/customer/pause", methods=["POST"])
+@customer_login_required
+def customer_pause_action():
+    """Customer self-service pause toggle (travel, festival, illness)."""
+    customer = get_current_customer()
+    from_date = request.form.get("from_date", "").strip()
+    to_date = request.form.get("to_date", "").strip() or None
+    reason = request.form.get("reason", "").strip()
+
+    if not from_date:
+        flash("Start date for pause is required.", "error")
+        return redirect(url_for("customer_dashboard_view"))
+
+    try:
+        service.pause(
+            phone=customer.phone,
+            from_date=from_date,
+            to_date=to_date,
+            reason=reason or "Customer self-service pause",
+        )
+        flash("Your pause has been scheduled. You will NOT be charged for paused weekdays!", "success")
+    except Exception as e:
+        flash(f"Error scheduling pause: {str(e)}", "error")
+
+    return redirect(url_for("customer_dashboard_view"))
+
+
+@app.route("/customer/resume", methods=["POST"])
+@customer_login_required
+def customer_resume_action():
+    """Customer self-service resume action."""
+    customer = get_current_customer()
+    resume_date = request.form.get("resume_date", "").strip() or None
+
+    try:
+        service.resume(phone=customer.phone, resume_date=resume_date)
+        flash("Your lunch delivery has been resumed successfully!", "success")
+    except Exception as e:
+        flash(f"Error resuming delivery: {str(e)}", "error")
+
+    return redirect(url_for("customer_dashboard_view"))
 
 
 @app.route("/dispatch")

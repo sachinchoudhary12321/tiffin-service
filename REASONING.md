@@ -313,4 +313,18 @@ Our platform was engineered specifically with the architecture to solve these fa
   - **Categorization Report**:
     - Returns structured JSON `{ "imported": [...], "deduped": [...], "rejected": [...] }` with line-by-line failure reasons (e.g. missing customer name, phone with $< 8$ digits, unparseable date).
 
+---
+
+## 11. Customer Experience & Self-Service Architecture
+
+### Why Traditional Customer Logins Fail in Food Services
+In home-style tiffin operations, forcing subscribers through cumbersome email/password registrations creates immediate friction and abandonment. Subscribers expect immediate convenience:
+1. **Passwordless Phone-Based Identity**: A customer's 10-digit mobile number is their natural primary key. At `/customer/login`, subscribers enter their phone number to enter their session without password fatigue.
+2. **Direct Self-Subscription (`/subscribe`)**: Prospective customers can browse meal plans (Standard Veg, Deluxe Veg, Non-Veg), pick a delivery start date, configure dietary preferences (e.g. extra roti, mild spice), and activate their subscription online in under 60 seconds.
+3. **Autonomous Customer Pause/Resume**:
+   - Instead of calling or messaging the kitchen owner on WhatsApp to say *"I am going to Pune for 4 days"*, the customer toggles their vacation pause directly from their phone dashboard.
+   - The kitchen dispatch sheet is instantly updated in real-time, eliminating miscommunication, food waste, and disputed charges.
+4. **Transparent Trust**: Customers have 24/7 access to their itemized calendar breakdown, seeing exactly which days were marked `DELIVERED` vs `PAUSED`, and verifying their pro-rated bill before payment.
+
+
 

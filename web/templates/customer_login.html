@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Portal Login - Annapurna Tiffin{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto py-12">
+  <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 space-y-6">
+    <div class="text-center space-y-2">
+      <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+        <i class="fa-solid fa-mobile-screen"></i>
+      </div>
+      <h2 class="text-2xl font-black text-slate-900">Customer Portal Login</h2>
+      <p class="text-xs text-slate-500">
+        Enter your 10-digit registered phone number to manage your lunch deliveries, toggle pauses, and view your live pro-rated bill.
+      </p>
+    </div>
+
+    {% if not_found %}
+      <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-2 text-xs text-amber-900">
+        <p class="font-bold flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-question text-amber-600"></i> New to Annapurna Tiffin?
+        </p>
+        <p class="text-[11px] text-amber-800">
+          We couldn't find a subscription for <strong>{{ phone }}</strong>. Subscribe in 60 seconds to start getting homestyle lunches delivered!
+        </p>
+        <a href="{{ url_for('customer_subscribe_view') }}" class="block text-center py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition text-xs shadow-sm">
+          Subscribe to a Meal Plan &rarr;
+        </a>
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('customer_login_view') }}" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">Registered Phone Number</label>
+        <div class="relative">
+          <i class="fa-solid fa-phone absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+          <input type="text" name="phone" value="{{ phone or '' }}" required placeholder="e.g. 9876543210" class="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none font-mono">
+        </div>
+        <span class="text-[10px] text-slate-400 mt-1 block">Passwordless access — instant lookup for active subscribers.</span>
+      </div>
+
+      <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-md transition text-xs flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-right-to-bracket"></i> Access My Customer Portal
+      </button>
+    </form>
+
+    <div class="pt-4 border-t border-slate-100 flex flex-col items-center gap-2 text-xs text-slate-500">
+      <p>
+        Want to start receiving lunch?
+        <a href="{{ url_for('customer_subscribe_view') }}" class="font-bold text-amber-700 hover:underline">
+          Subscribe Online
+        </a>
+      </p>
+      <p class="text-[11px] text-slate-400">
+        Are you the kitchen owner?
+        <a href="{{ url_for('login_view') }}" class="font-semibold text-slate-600 hover:underline">
+          Owner / Admin Login &rarr;
+        </a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

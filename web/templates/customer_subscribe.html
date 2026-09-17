@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Subscribe to Homestyle Lunch Delivery - Annapurna Tiffin{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-6 space-y-8">
+  <!-- Header -->
+  <div class="text-center space-y-2">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider">
+      <span class="w-2 h-2 rounded-full bg-amber-600"></span> New Customer Subscription
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900">Choose Your Homestyle Lunch Plan</h1>
+    <p class="text-xs sm:text-sm text-slate-600 max-w-xl mx-auto">
+      Delivered hot to your office or home every Monday through Friday. Pause anytime with 1 tap — you are billed strictly for meals actually delivered!
+    </p>
+  </div>
+
+  <!-- Subscription Form -->
+  <form method="POST" action="{{ url_for('customer_subscribe_view') }}" class="space-y-8">
+    <!-- Step 1: Select Meal Plan -->
+    <div class="space-y-4">
+      <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+        <span class="w-5 h-5 rounded-full bg-amber-600 text-white inline-flex items-center justify-center text-xs">1</span>
+        Select Your Monthly Plan
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {% for p in plans %}
+          <label class="relative flex flex-col p-5 bg-white rounded-2xl border-2 cursor-pointer transition hover:border-amber-500 hover:shadow-md has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/40 has-[:checked]:shadow-sm">
+            <input type="radio" name="plan_id" value="{{ p.id }}" required class="sr-only" {{ 'checked' if loop.first else '' }}>
+            <div class="flex justify-between items-start mb-2">
+              <span class="text-2xl">
+                {% if 'non_veg' in p.id %}🍗{% elif 'deluxe' in p.id %}🍛{% else %}🥗{% endif %}
+              </span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800">
+                Weekday Lunch
+              </span>
+            </div>
+            <h4 class="font-bold text-slate-900 text-base">{{ p.name }}</h4>
+            <p class="text-xs text-slate-500 mt-1 min-h-[36px]">{{ p.description or 'Freshly cooked authentic homestyle lunch.' }}</p>
+            <div class="mt-4 pt-3 border-t border-slate-100">
+              <span class="text-2xl font-black text-slate-900">Rs. {{ "%.0f"|format(p.monthly_price) }}</span>
+              <span class="text-xs text-slate-500 font-medium">/ month</span>
+              <p class="text-[11px] text-emerald-700 font-semibold mt-1">
+                <i class="fa-solid fa-check mr-1"></i> Pro-rated for working days (~Rs. {{ "%.1f"|format(p.monthly_price / 22) }}/meal)
+              </p>
+            </div>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Step 2: Delivery & Contact Details -->
+    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+      <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+        <span class="w-5 h-5 rounded-full bg-amber-600 text-white inline-flex items-center justify-center text-xs">2</span>
+        Your Delivery & Contact Information
+      </h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Full Name <span class="text-rose-500">*</span></label>
+          <input type="text" name="name" required placeholder="e.g. Ananya Verma" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Mobile Phone Number <span class="text-rose-500">*</span></label>
+          <input type="text" name="phone" required placeholder="10-digit phone (e.g. 9876543210)" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          <span class="text-[10px] text-slate-400 mt-1 block">Used for daily delivery updates and customer login.</span>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Delivery Start Date <span class="text-rose-500">*</span></label>
+          <input type="date" name="start_date" required value="{{ today_str }}" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          <span class="text-[10px] text-slate-400 mt-1 block">Your bill pro-rates starting strictly from this date.</span>
+        </div>
+
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Dietary Preferences / Notes (Optional)</label>
+          <input type="text" name="notes" placeholder="e.g. Mild spice, extra roti, no coriander..." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          <span class="text-[10px] text-slate-400 mt-1 block">Special requests are tagged directly on the kitchen prep sheet.</span>
+        </div>
+
+        <div class="sm:col-span-2">
+          <label class="font-bold text-slate-700 block mb-1">Delivery Address <span class="text-rose-500">*</span></label>
+          <textarea name="address" required rows="2" placeholder="Office / Flat No., Wing, Building / Society Name, Street, Landmark..." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        </div>
+      </div>
+
+      <!-- Trust Guarantees -->
+      <div class="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-amber-600 text-lg"></i>
+          <div>
+            <strong>100% Pro-Rated Guarantee:</strong>
+            <p class="text-[11px] text-amber-800">Pause anytime via your customer dashboard. Zero charge for paused days.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 font-bold text-emerald-800 bg-white px-3 py-1.5 rounded-xl border border-amber-200 shrink-0">
+          <i class="fa-solid fa-calendar-check text-emerald-600"></i> Mon-Fri Only
+        </div>
+      </div>
+
+      <button type="submit" class="w-full py-3.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-2xl shadow-md transition transform hover:-translate-y-0.5 text-sm flex items-center justify-center gap-2">
+        <i class="fa-solid fa-utensils"></i> Confirm & Activate Lunch Subscription
+      </button>
+    </div>
+  </form>
+
+  <div class="text-center text-xs text-slate-500">
+    Already have an active subscription?
+    <a href="{{ url_for('customer_login_view') }}" class="font-bold text-amber-700 hover:underline">
+      Log in with your phone number &rarr;
+    </a>
+  </div>
+</div>
+{% endblock %}

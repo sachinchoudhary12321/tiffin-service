@@ -16,10 +16,11 @@ Customers subscribe to a monthly meal plan for weekday lunch deliveries, pause d
 - **WhatsApp 1-Click Bill Sharing**: Instant pre-formatted WhatsApp billing notification generator (`wa.me`) with line-by-line breakdown for easy customer sharing.
 - **1-Click CSV Exports**: One-click download of Monthly Billing Ledgers (`/export/bills.csv`) and Daily Delivery Run-Sheets (`/export/dispatch.csv`).
 - **Interactive Zero-Hallucination AI Assistant (`/assistant`, `/api/chat`)**: Transparent conversational engine with step-by-step mathematical reasoning, strictly grounded in verified company meal schemes and database records without hallucination.
+- **Customer Online Self-Subscription & Portal (`/subscribe`, `/customer/login`, `/customer/dashboard`)**: Prospective customers choose their meal plan and subscribe directly online. Active subscribers log in with their phone number to manage their profile, self-schedule pauses for travel/festivals, resume deliveries, and print pro-rated receipts.
 - **Customer Self-Service Bill Portal (`/my-bill`)**: Public portal where subscribers check their personal live attendance calendar and verified pro-rated bill by phone number.
 - **Kitchen Meal Plan Matrix & Dietary Alerts**: Real-time kitchen tally of meal plans (Standard Veg, Deluxe Veg, Non-Veg) and special dietary instructions (no onion-garlic, extra roti, mild spice).
 - **One-Page Product Landing Page**: Integrated showcase covering What it is, Key features, Target audience, How it helps, and Three features to build next.
-- **Automated Test Suite**: 42 comprehensive unit, integration, twist, and API tests with 100% pass rate.
+- **Automated Test Suite**: 45 comprehensive unit, integration, customer portal, twist, and API tests with 100% pass rate.
 
 ---
 
@@ -81,6 +82,9 @@ pytest tests/test_api_and_web.py -v
 
 # Zero-hallucination AI reasoning chatbot tests
 pytest tests/test_chatbot.py -v
+
+# Customer Online Subscription & Portal tests
+pytest tests/test_customer_portal.py -v
 
 # Official Round 2 Twists (Level 1 T1 clock/outbox, Level 2 T6 transfer, Level 3 T4 import)
 pytest tests/test_twists_t1_t6_t4.py -v
@@ -608,6 +612,27 @@ Ingest messy customer spreadsheets containing duplicated phone numbers, inconsis
     }
   }
   ```
+
+---
+
+### 👤 Customer Self-Service & Online Subscription Flow
+
+#### 1. Public Online Subscription (`GET & POST /subscribe`)
+Prospective customers can visit `/subscribe` directly from the landing page or navbar to:
+- Choose from active meal plans: **Standard Vegetarian (₹3,000/mo)**, **Deluxe Vegetarian (₹3,800/mo)**, or **Non-Vegetarian (₹4,200/mo)**.
+- Input delivery location, dietary notes (e.g. mild spice, extra roti), and target start date.
+- Upon submission, their subscription is immediately activated, their session is logged in, and they are redirected to their customer dashboard.
+
+#### 2. Passwordless Customer Login (`GET & POST /customer/login`)
+- Customers log in simply by entering their **10-digit registered phone number**.
+- Zero password fatigue; immediate session authorization.
+- Unregistered visitors receive an instant invitation to subscribe.
+
+#### 3. Customer Dashboard (`GET /customer/dashboard`)
+- **Today's Delivery Card**: Shows real-time lunch delivery status (Active & Packing vs. Paused).
+- **Self-Service Pause Engine (`POST /customer/pause`)**: Customers can schedule vacations, festival breaks, or sick leaves directly from their phone with 1 tap.
+- **Self-Service Resume (`POST /customer/resume`)**: Reactivates lunch delivery immediately.
+- **Live Attendance & Pro-Rated Bill**: Full transparency with itemized calendar attendance and 1-click printable receipt.
 
 ---
 

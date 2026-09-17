@@ -1621,6 +1621,31 @@ The current local time is: 2026-09-17T16:02:54+05:30.
 - **Web UI Enhancements**:
   - `web/templates/dispatch.html`: Added 1-click "Trigger Morning Clock (POST /clock)" button with outbox modal and link.
   - `web/templates/customers.html`: Added Mid-Cycle Transfer form in customer profile dossier and "Import Messy Customers (T4)" component with CSV upload and raw text parsing.
-- **Documentation**: Updated `README.md` and `REASONING.md` with complete twist endpoint documentation and mathematical billing invariance proofs.
 - **Git Remote Synchronization**: Staged all changes, created commit, and pushed to `origin main` on GitHub.
+
+---
+
+### Phase 11: Customer Online Subscription & Portal Implementation
+
+#### Instructions Received:
+- User Question: "is there is login for the customer who want to take the tiffin service"
+- User Instruction: "yes make this for the customer"
+
+#### Tool Executions & Actions:
+- **`web/app.py`**:
+  - Added customer session resolvers: `get_current_customer()` and `@customer_login_required`.
+  - Added global context processor `inject_global_context()` injecting `current_user` and `current_customer` across all templates.
+  - Implemented customer self-subscription route: `GET & POST /subscribe`.
+  - Implemented passwordless phone login route: `GET & POST /customer/login`.
+  - Implemented customer logout: `GET /customer/logout`.
+  - Implemented customer self-service dashboard: `GET /customer/dashboard`.
+  - Implemented customer self-service pause: `POST /customer/pause`.
+  - Implemented customer self-service resume: `POST /customer/resume`.
+- **`web/templates/customer_subscribe.html`**: Created modern online ordering page with meal plan cards, pricing breakdown, dietary preferences, delivery address, and start date.
+- **`web/templates/customer_login.html`**: Created passwordless phone login page with invitation to subscribe for new users.
+- **`web/templates/customer_dashboard.html`**: Created subscriber dashboard displaying active delivery status, pause/resume controls, pro-rated month-to-date bill, attendance calendar, and 1-click printable receipt.
+- **`web/templates/base.html` & `web/templates/landing.html`**: Updated navbar and hero section with "Order Tiffin" and "Customer Portal" CTAs.
+- **`tests/test_customer_portal.py`**: Created automated test suite covering online subscription, phone login, dashboard rendering, self-service pause/resume, and logout.
+- **Test Suite Verification**: Ran full test suite — all 45 unit, integration, customer portal, twist, and API tests passed with 100% pass rate in 5.86s.
+
 

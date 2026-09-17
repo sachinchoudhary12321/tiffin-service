@@ -16,15 +16,15 @@
     <p class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
       A home-style tiffin subscription platform that automatically pro-rates monthly lunch plans for weekdays actually delivered. Handled dynamically when life happens.
     </p>
-    <div class="flex flex-wrap justify-center gap-4 pt-2">
-      <a href="{{ url_for('dispatch_view') }}" class="px-6 py-3.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-md transition transform hover:-translate-y-0.5 text-sm flex items-center gap-2">
-        <i class="fa-solid fa-truck-fast"></i> Open Today's Dispatch
+    <div class="flex flex-wrap justify-center gap-3 pt-2">
+      <a href="{{ url_for('customer_subscribe_view') }}" class="px-7 py-3.5 bg-amber-600 hover:bg-amber-700 text-white font-black rounded-xl shadow-lg transition transform hover:-translate-y-0.5 text-sm flex items-center gap-2">
+        <i class="fa-solid fa-utensils"></i> Order Tiffin / Subscribe Online
       </a>
-      <a href="{{ url_for('customers_view') }}" class="px-6 py-3.5 bg-white hover:bg-slate-100 text-slate-800 font-bold rounded-xl shadow-sm border border-slate-200 transition text-sm flex items-center gap-2">
-        <i class="fa-solid fa-magnifying-glass"></i> Customer Lookup & Directory
+      <a href="{{ url_for('customer_login_view') }}" class="px-6 py-3.5 bg-white hover:bg-amber-50 text-amber-800 font-bold rounded-xl shadow-sm border-2 border-amber-500 transition text-sm flex items-center gap-2">
+        <i class="fa-solid fa-mobile-screen"></i> Customer Portal Login
       </a>
-      <a href="{{ url_for('billing_view') }}" class="px-6 py-3.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl border border-indigo-200 transition text-sm flex items-center gap-2">
-        <i class="fa-solid fa-file-invoice-dollar"></i> View Month-End Bills
+      <a href="{{ url_for('dispatch_view') }}" class="px-5 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition text-sm flex items-center gap-2">
+        <i class="fa-solid fa-truck-fast"></i> Kitchen Dispatch
       </a>
     </div>
   </section>
