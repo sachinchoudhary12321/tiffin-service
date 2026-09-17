@@ -8,7 +8,8 @@ import sqlite3
 from typing import List, Optional, Set
 
 from .calendar_utils import format_date, parse_date
-from .models import Customer, PauseRecord, Plan, Subscription, SubscriptionStatus
+from .models import Customer, PauseRecord, Plan, Subscription, SubscriptionStatus, User
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class Storage:
@@ -61,11 +62,30 @@ class Storage:
                     FOREIGN KEY (customer_phone) REFERENCES customers(phone)
                 );
 
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    email TEXT DEFAULT '',
+                    role TEXT DEFAULT 'owner',
+                    created_at TEXT NOT NULL
+                );
+
                 CREATE TABLE IF NOT EXISTS holidays (
                     date TEXT PRIMARY KEY,
                     name TEXT NOT NULL
                 );
             """)
+
+            cur = conn.cursor()
+            # Seed default admin user if none exists
+            cur.execute("SELECT COUNT(*) FROM users")
+            if cur.fetchone()[0] == 0:
+                conn.execute(
+                    "INSERT INTO users (username, password_hash, email, role, created_at) VALUES (?, ?, ?, ?, ?)",
+                    ("admin", generate_password_hash("admin123"), "admin@tiffin.local", "owner", datetime.now().isoformat())
+                )
+                conn.commit()
 
             # Seed default plans if none exist
             cur = conn.cursor()
@@ -304,3 +324,102 @@ class Storage:
         with self._get_connection() as conn:
             rows = conn.execute("SELECT date FROM holidays WHERE date LIKE ?", (prefix,)).fetchall()
             return {parse_date(row["date"]) for row in rows}
+
+    # --- User Authentication Methods ---
+    def create_user(self, user: User) -> User:
+        created_at = user.created_at or datetime.now().isoformat()
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO users (username, password_hash, email, role, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (user.username, user.password_hash, user.email, user.role, created_at),
+            )
+            conn.commit()
+            user.id = cur.lastrowid
+            user.created_at = created_at
+            return user
+
+    def get_user_by_username(self, username: str) -> Optional[User]:
+        with self._get_connection() as conn:
+            row = conn.execute("SELECT * FROM users WHERE username = ?", (username.strip(),)).fetchone()
+            if not row:
+                return None
+            return User(
+                id=row["id"],
+                username=row["username"],
+                password_hash=row["password_hash"],
+                email=row["email"],
+                role=row["role"],
+                created_at=row["created_at"],
+            )
+
+    def get_user_by_id(self, user_id: int) -> Optional[User]:
+        with self._get_connection() as conn:
+            row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+            if not row:
+                return None
+            return User(
+                id=row["id"],
+                username=row["username"],
+                password_hash=row["password_hash"],
+                email=row["email"],
+                role=row["role"],
+                created_at=row["created_at"],
+            )
+
+    # --- Search, Pagination and Sorting on Customers ---
+    def search_customers(
+        self,
+        query: str = "",
+        sort_by: str = "name",
+        order: str = "asc",
+        page: int = 1,
+        per_page: int = 10,
+    ) -> tuple[List[Customer], int, int]:
+        """
+        Search customers by name, phone, address or notes.
+        Supports sorting and pagination.
+        Returns (customers_list, total_count, total_pages).
+        """
+        allowed_cols = {"name": "name", "phone": "phone", "created_at": "created_at"}
+        col = allowed_cols.get(sort_by.lower(), "name")
+        direction = "DESC" if order.lower() == "desc" else "ASC"
+
+        query_filter = f"%{query.strip()}%" if query else "%"
+        offset = max(0, (page - 1) * per_page)
+
+        with self._get_connection() as conn:
+            count_cur = conn.execute(
+                """
+                SELECT COUNT(*) FROM customers
+                WHERE name LIKE ? OR phone LIKE ? OR address LIKE ? OR notes LIKE ?
+                """,
+                (query_filter, query_filter, query_filter, query_filter),
+            )
+            total_count = count_cur.fetchone()[0]
+            total_pages = max(1, (total_count + per_page - 1) // per_page)
+
+            query_sql = f"""
+                SELECT * FROM customers
+                WHERE name LIKE ? OR phone LIKE ? OR address LIKE ? OR notes LIKE ?
+                ORDER BY {col} {direction}
+                LIMIT ? OFFSET ?
+            """
+            rows = conn.execute(
+                query_sql,
+                (query_filter, query_filter, query_filter, query_filter, per_page, offset),
+            ).fetchall()
+
+            customers = [
+                Customer(
+                    phone=r["phone"],
+                    name=r["name"],
+                    address=r["address"],
+                    notes=r["notes"],
+                    created_at=r["created_at"],
+                )
+                for r in rows
+            ]
+            return customers, total_count, total_pages

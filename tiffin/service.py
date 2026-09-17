@@ -10,8 +10,9 @@ from typing import Any, Dict, List, Optional, Set
 
 from .billing import calculate_pro_rated_bill
 from .calendar_utils import format_date, is_weekday, parse_date
-from .models import Bill, Customer, PauseRecord, Plan, Subscription, SubscriptionStatus
+from .models import Bill, Customer, PauseRecord, Plan, Subscription, SubscriptionStatus, User
 from .storage import Storage
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 def normalize_phone(phone: str) -> str:
@@ -37,6 +38,33 @@ class TiffinService:
 
     def get_plan(self, plan_id: str) -> Optional[Plan]:
         return self.storage.get_plan(plan_id)
+
+    # --- User Authentication ---
+    def register_user(self, username: str, password: str, email: str = "", role: str = "owner") -> User:
+        username = username.strip()
+        if not username:
+            raise ValueError("Username cannot be empty")
+        if len(password) < 4:
+            raise ValueError("Password must be at least 4 characters long")
+        existing = self.storage.get_user_by_username(username)
+        if existing:
+            raise ValueError(f"Username '{username}' already exists")
+        
+        user = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            email=email.strip(),
+            role=role,
+        )
+        return self.storage.create_user(user)
+
+    def authenticate_user(self, username: str, password: str) -> Optional[User]:
+        user = self.storage.get_user_by_username(username.strip())
+        if not user:
+            return None
+        if check_password_hash(user.password_hash, password):
+            return user
+        return None
 
     # --- Subscription Lifecycle ---
     def subscribe(
@@ -350,7 +378,47 @@ class TiffinService:
             sub = self.storage.get_subscription_for_customer(cust.phone)
             if not sub:
                 continue
-            # Generate bill if subscription was active during the month
             bill = self.generate_bill(cust.phone, year, month)
             bills.append(bill)
         return bills
+
+    def search_customers(
+        self,
+        query: str = "",
+        sort_by: str = "name",
+        order: str = "asc",
+        page: int = 1,
+        per_page: int = 10,
+    ) -> tuple[List[Customer], int, int]:
+        return self.storage.search_customers(
+            query=query,
+            sort_by=sort_by,
+            order=order,
+            page=page,
+            per_page=per_page,
+        )
+
+    def paginate_bills(
+        self,
+        bills: List[Bill],
+        sort_by: str = "customer_name",
+        order: str = "asc",
+        page: int = 1,
+        per_page: int = 10,
+    ) -> tuple[List[Bill], int, int]:
+        reverse = (order.lower() == "desc")
+        if sort_by == "total_amount":
+            sorted_bills = sorted(bills, key=lambda b: b.total_amount, reverse=reverse)
+        elif sort_by == "delivered_weekdays":
+            sorted_bills = sorted(bills, key=lambda b: b.delivered_weekdays, reverse=reverse)
+        elif sort_by == "phone":
+            sorted_bills = sorted(bills, key=lambda b: b.customer_phone, reverse=reverse)
+        else:
+            sorted_bills = sorted(bills, key=lambda b: b.customer_name.lower(), reverse=reverse)
+
+        total_count = len(sorted_bills)
+        total_pages = max(1, (total_count + per_page - 1) // per_page)
+        offset = max(0, (page - 1) * per_page)
+        paginated = sorted_bills[offset : offset + per_page]
+        return paginated, total_count, total_pages
+

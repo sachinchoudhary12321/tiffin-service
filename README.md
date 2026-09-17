@@ -1,175 +1,478 @@
-# 🍱 Tiffin Service Subscription & Pro-Rated Billing Engine
+# 🍱 Annapurna Tiffin - Management & Pro-Rated Billing Platform
 
-A home-style lunch delivery (tiffin) management system designed for independent meal providers. Customers subscribe to a monthly plan for weekday lunch deliveries, pause dynamically for travel or festivals, and are **billed only for the days food was actually delivered**.
+A full-stack, home-style tiffin (lunch delivery) management and pro-rated billing operating system. Built for Round 2 ("Builder" Round) of the Auriga IT Campus Recruitment Drive.
 
-Built with a domain-driven Python core, transactional SQLite storage, a rich CLI, a visual Web Dashboard, and a 100% passing automated test suite.
-
----
-
-## 📖 The Storyline & Problem
-
-In home-style food delivery, charging a flat monthly subscription fails whenever real life happens:
-1. **Weekdays Only**: Deliveries occur Monday through Friday (typically 20 to 23 days per month, not 30).
-2. **Fresh Food Prep Costs**: Every lunch prepared requires fresh ingredients, kitchen labor, and fuel. When customers travel or take time off, they expect not to be charged, and the kitchen needs to know not to cook for them.
-3. **The Pro-Ration Trap**: A flat monthly rate divided naively by 30 days under-bills the customer on active days and miscalculates credits on pause days.
-4. **Kitchen Operations**: Every morning at 6 AM, the owner must know: **Who is Active (cook & pack) vs. who is Paused?**
-5. **Universal Lookup by Phone**: In local food delivery, the customer's phone number is their sole identity.
+Customers subscribe to a monthly meal plan for weekday lunch deliveries, pause dynamically for travel, illness, or festivals, and are **billed strictly for the meals actually delivered**.
 
 ---
 
-## 📐 Mathematical Pro-Ration Model
+## 🌟 Solution Highlights
 
-The system implements the **Calendar Weekday Pro-Ration Engine**:
-
-$$\text{Daily Rate} = \frac{\text{Monthly Plan Price}}{\text{Total Weekdays in the Billing Month}}$$
-
-$$\text{Total Bill} = \text{Round}\left(\text{Delivered Weekdays} \times \text{Daily Rate}, 2\right)$$
-
-### Key Advantages:
-- **Full Attendance Guarantee**: If a customer receives deliveries every weekday of that month, their bill is **exactly** the monthly plan price.
-- **Fair Absence Credit**: If a customer is paused for 5 weekdays in a 22-weekday month (\$2,200 plan), they pay $\frac{17}{22} \times 2200 = \$1,700.00$.
-- **Weekend Invariance**: Pausing from Friday to Monday (4 calendar days) only discounts 2 delivery weekdays (Friday & Monday), not Saturday or Sunday.
-- **Mid-Month Join**: A customer subscribing on the 15th is only charged for weekdays following their start date.
-- **Cross-Month Isolation**: Pausing across month boundaries (e.g., Oct 28 to Nov 5) deducts October days from October's bill and November days from November's bill.
+- **Database Persistence**: SQLite schema with transactional foreign-key integrity (`users`, `customers`, `plans`, `subscriptions`, `pauses`, `holidays`).
+- **REST APIs**: Full suite of JSON REST endpoints with status codes, error handling, and parameter validation.
+- **Modern Responsive Web UI**: Tailwind CSS interface with kitchen dispatch sheet, phone lookup dossier, and 1-click printable tax invoices.
+- **User Authentication**: Secure user registration, login, session cookies, and `pbkdf2:sha256` password hashing.
+- **Search, Pagination & Sorting**: Case-insensitive search across customer names, phone numbers, and addresses with dynamic sorting (`asc`/`desc`) and multi-page pagination.
+- **One-Page Product Landing Page**: Integrated showcase covering What it is, Key features, Target audience, How it helps, and Three features to build next.
+- **Automated Test Suite**: 27 unit, integration, and API tests with 100% pass rate.
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quickstart & Setup Guide
 
-### Prerequisites
+### 1. Prerequisites
 - Python 3.8+ (tested on Python 3.13)
-- Git
+- `pip` package manager
 
-### Installation
+### 2. Clone Repository
 ```bash
 git clone https://github.com/sachinchoudhary12321/tiffin-service.git
 cd tiffin-service
-pip install -e .
 ```
+
+### 3. Install Dependencies
+```bash
+pip install -e .
+# Or install directly:
+pip install flask pytest
+```
+
+### 4. Run the Web Application
+```bash
+python web/app.py
+```
+Open your browser at **[http://localhost:5000](http://localhost:5000)**.
+
+> **Default Demo Login**:  
+> **Username**: `admin`  
+> **Password**: `admin123`  
+> *(You can also click "Register" on the top-right to create a new owner account).*
+
+---
+
+## 🧪 Running Automated Tests & Debugging
+
+Run the full pytest suite:
+```bash
+python -m pytest -v
+```
+
+### Running Specific Test Suites:
+```bash
+# Pro-ration billing math tests
+pytest tests/test_billing.py -v
+
+# Calendar and weekday calculations
+pytest tests/test_calendar.py -v
+
+# Subscription, pause, resume lifecycle tests
+pytest tests/test_lifecycle.py -v
+
+# User authentication, customer search & pagination
+pytest tests/test_auth_and_search.py -v
+
+# REST API and Web view tests
+pytest tests/test_api_and_web.py -v
+```
+
+### Debugging Tips:
+- **Database Inspection**: The SQLite database is stored at `tiffin.db` in the project root. You can inspect it with `sqlite3 tiffin.db` or GUI tools like DB Browser for SQLite.
+- **Custom Port**: Run `PORT=8000 python web/app.py` to bind to an alternate port.
+- **Clean Database Reset**: Delete `tiffin.db` and restart the application; the schema and default meal plans/admin user will auto-seed automatically.
+
+---
+
+## 📡 REST API Endpoints Specification
+
+All API endpoints return JSON. Successful responses return `"success": true`.
+
+### Authentication Endpoints
+
+#### `POST /api/auth/register`
+Register a new kitchen owner account.
+- **Request Body**:
+  ```json
+  {
+    "username": "jaipur_kitchen",
+    "password": "securepassword",
+    "email": "owner@jaipur.com"
+  }
+  ```
+- **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "User registered successfully",
+    "user": {
+      "id": 2,
+      "username": "jaipur_kitchen",
+      "email": "owner@jaipur.com",
+      "role": "owner"
+    }
+  }
+  ```
+
+#### `POST /api/auth/login`
+Authenticate and initiate session.
+- **Request Body**:
+  ```json
+  {
+    "username": "admin",
+    "password": "admin123"
+  }
+  ```
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "message": "Login successful",
+    "user": { "id": 1, "username": "admin", "role": "owner" }
+  }
+  ```
+
+#### `POST /api/auth/logout`
+Terminates active user session.
+- **Response (200 OK)**: `{"success": true, "message": "Logged out successfully"}`
+
+#### `GET /api/auth/me`
+Retrieve active logged-in user profile.
+- **Response (200 OK / 401 Unauthorized)**:
+  ```json
+  {
+    "success": true,
+    "authenticated": true,
+    "user": { "id": 1, "username": "admin", "email": "admin@tiffin.local", "role": "owner" }
+  }
+  ```
+
+---
+
+### Meal Plans Endpoint
+
+#### `GET /api/plans`
+Retrieve all available meal subscription plans.
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "plans": [
+      {
+        "id": "standard_veg",
+        "name": "Standard Vegetarian",
+        "monthly_price": 3000.0,
+        "description": "Nutritious home-style veg thali every weekday"
+      },
+      {
+        "id": "special_veg",
+        "name": "Deluxe Vegetarian",
+        "monthly_price": 3800.0,
+        "description": "Includes dessert, curd & specialty paneer dishes"
+      },
+      {
+        "id": "non_veg",
+        "name": "Non-Vegetarian",
+        "monthly_price": 4200.0,
+        "description": "Chicken/egg dishes 3 days a week, veg on other weekdays"
+      }
+    ]
+  }
+  ```
+
+---
+
+### Customers & Subscriptions Endpoints
+
+#### `GET /api/customers`
+Retrieve paginated, searchable, and sorted customers list.
+- **Query Parameters**:
+  - `query` (optional): search term (matches name, phone, address, notes)
+  - `sort_by` (optional): `name`, `phone`, `created_at` (default: `name`)
+  - `order` (optional): `asc`, `desc` (default: `asc`)
+  - `page` (optional): page number (default: `1`)
+  - `per_page` (optional): items per page (default: `10`)
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "query": "Amit",
+    "sort_by": "name",
+    "order": "asc",
+    "page": 1,
+    "per_page": 10,
+    "total_count": 1,
+    "total_pages": 1,
+    "customers": [
+      {
+        "phone": "9876543210",
+        "name": "Amit Sharma",
+        "address": "Flat 301, Marvel Apts",
+        "notes": "Less spicy",
+        "created_at": "2026-09-17T14:41:31"
+      }
+    ]
+  }
+  ```
+
+#### `GET /api/customers/<phone>`
+Look up customer dossier, active pause, live status, and current month bill estimate.
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "customer": {
+      "name": "Amit Sharma",
+      "phone": "9876543210",
+      "address": "Flat 301, Marvel Apts"
+    },
+    "subscription": {
+      "plan_id": "standard_veg",
+      "start_date": "2026-10-01",
+      "status": "ACTIVE"
+    },
+    "status_today": {
+      "status": "PAUSED",
+      "is_delivery_day": false,
+      "pause_reason": "Visiting parents"
+    },
+    "current_month_estimate": {
+      "month": "October",
+      "delivered_weekdays": 17,
+      "paused_weekdays": 5,
+      "total_amount": 2318.18
+    }
+  }
+  ```
+
+#### `POST /api/subscriptions`
+Subscribe a customer to a monthly weekday lunch plan.
+- **Request Body**:
+  ```json
+  {
+    "name": "Rohit Sen",
+    "phone": "9899001122",
+    "plan_id": "non_veg",
+    "address": "Villa 14, Palm Meadows",
+    "start_date": "2026-10-01",
+    "notes": "No coriander"
+  }
+  ```
+- **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "Subscription created successfully",
+    "subscription": {
+      "phone": "9899001122",
+      "plan_id": "non_veg",
+      "start_date": "2026-10-01",
+      "status": "ACTIVE"
+    }
+  }
+  ```
+
+---
+
+### Pause & Resume Lifecycle Endpoints
+
+#### `POST /api/pauses`
+Pause lunch delivery for a customer (fixed date range or indefinite).
+- **Request Body**:
+  ```json
+  {
+    "phone": "9876543210",
+    "from_date": "2026-10-05",
+    "to_date": "2026-10-09",
+    "reason": "Traveling to Jaipur"
+  }
+  ```
+- **Response (201 Created)**:
+  ```json
+  {
+    "success": true,
+    "message": "Delivery paused successfully",
+    "pause": {
+      "id": 1,
+      "phone": "9876543210",
+      "from_date": "2026-10-05",
+      "to_date": "2026-10-09",
+      "reason": "Traveling to Jaipur"
+    }
+  }
+  ```
+
+#### `POST /api/resumes`
+Resume delivery for a paused customer.
+- **Request Body**:
+  ```json
+  {
+    "phone": "9876543210",
+    "resume_date": "2026-10-10"
+  }
+  ```
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "resumed": true
+  }
+  ```
+
+---
+
+### Kitchen Dispatch & Pro-Rated Billing Endpoints
+
+#### `GET /api/dispatch`
+Get the morning kitchen prep and dispatch counts for any target date.
+- **Query Parameters**: `date=YYYY-MM-DD` (optional, default: today)
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "date": "2026-10-07",
+    "day_name": "Wednesday",
+    "is_weekday": true,
+    "is_holiday": false,
+    "total_subscribed": 3,
+    "active_count": 2,
+    "paused_count": 1,
+    "active_deliveries": [
+      {
+        "name": "Priya Nair",
+        "phone": "9811223344",
+        "plan_name": "Deluxe Vegetarian",
+        "address": "Tower B-502, Orchid Woods"
+      },
+      {
+        "name": "Rohit Sen",
+        "phone": "9899001122",
+        "plan_name": "Non-Vegetarian",
+        "address": "Villa 14, Palm Meadows"
+      }
+    ],
+    "paused_deliveries": [
+      {
+        "name": "Amit Sharma",
+        "phone": "9876543210",
+        "plan_name": "Standard Vegetarian",
+        "reason": "Traveling to Jaipur",
+        "resume_date": "2026-10-09"
+      }
+    ]
+  }
+  ```
+
+#### `GET /api/bills`
+Generate paginated and sorted monthly billing summary for all subscribers.
+- **Query Parameters**:
+  - `month` (e.g. `2026-10`)
+  - `sort_by` (`customer_name`, `total_amount`, `delivered_weekdays`, `phone`)
+  - `order` (`asc`, `desc`)
+  - `page` & `per_page`
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "month": "2026-10",
+    "grand_total": 9800.0,
+    "page": 1,
+    "per_page": 10,
+    "total_count": 3,
+    "total_pages": 1,
+    "bills": [
+      {
+        "customer_name": "Amit Sharma",
+        "customer_phone": "9876543210",
+        "plan_name": "Standard Vegetarian",
+        "total_month_weekdays": 22,
+        "delivered_weekdays": 17,
+        "paused_weekdays": 5,
+        "daily_rate": 136.3636,
+        "total_amount": 2318.18
+      }
+    ]
+  }
+  ```
+
+#### `GET /api/bills/<phone>`
+Retrieve detailed pro-rated bill with itemized daily attendance audit.
+- **Query Parameters**: `month=YYYY-MM` (e.g., `2026-10`)
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "bill": {
+      "customer_name": "Amit Sharma",
+      "customer_phone": "9876543210",
+      "plan_name": "Standard Vegetarian",
+      "plan_monthly_price": 3000.0,
+      "billing_month": "2026-10",
+      "month_name": "October",
+      "total_month_weekdays": 22,
+      "subscribed_weekdays": 22,
+      "paused_weekdays": 5,
+      "holiday_weekdays": 0,
+      "delivered_weekdays": 17,
+      "daily_rate": 136.3636,
+      "total_amount": 2318.18,
+      "days_breakdown": [
+        {
+          "date": "2026-10-01",
+          "day_name": "Thursday",
+          "status": "DELIVERED",
+          "billable": true,
+          "note": "Lunch delivered"
+        },
+        {
+          "date": "2026-10-05",
+          "day_name": "Monday",
+          "status": "PAUSED",
+          "billable": false,
+          "note": "Paused: Traveling to Jaipur"
+        }
+      ]
+    }
+  }
+  ```
 
 ---
 
 ## 🖥️ Command-Line Interface (CLI)
 
-The package includes an owner CLI for rapid operations:
+The package includes an owner CLI for command-line operations:
 
-### 1. View Available Plans
 ```bash
+# View available plans
 python -m tiffin.cli plans
-```
 
-### 2. Subscribe a Customer
-```bash
-python -m tiffin.cli subscribe \
-  --name "Amit Sharma" \
-  --phone "9876543210" \
-  --plan "standard_veg" \
-  --address "Flat 301, Marvel Apts" \
-  --start-date "2026-10-01"
-```
+# Subscribe customer
+python -m tiffin.cli subscribe --name "Amit Sharma" --phone 9876543210 --plan standard_veg --address "Flat 301"
 
-### 3. Pause Deliveries
-Schedule a pause with an exact return date or pause indefinitely:
-```bash
-# Fixed range (e.g. traveling for 1 week)
+# Pause customer
 python -m tiffin.cli pause --phone 9876543210 --from 2026-10-05 --to 2026-10-09 --reason "Visiting parents"
 
-# Indefinite pause
-python -m tiffin.cli pause --phone 9876543210 --from 2026-10-15 --reason "Medical leave"
-```
+# Resume customer
+python -m tiffin.cli resume --phone 9876543210 --date 2026-10-10
 
-### 4. Resume Deliveries
-```bash
-python -m tiffin.cli resume --phone 9876543210 --date 2026-10-20
-```
-
-### 5. Kitchen Dispatch Sheet (Active vs. Paused)
-Run this every morning to generate the prep and dispatch counts:
-```bash
-python -m tiffin.cli dispatch --date 2026-10-07
-```
-
-### 6. Phone Lookup
-View customer profile, live status (Active vs. Paused), and month-to-date bill estimate:
-```bash
+# Look up customer dossier
 python -m tiffin.cli lookup 9876543210
-```
 
-### 7. Generate Month-End Pro-Rated Bill
-```bash
-# Customer bill with line-by-line itemized calendar audit
+# Daily kitchen dispatch
+python -m tiffin.cli dispatch --date 2026-10-07
+
+# Itemized month-end bill
 python -m tiffin.cli bill --phone 9876543210 --month 2026-10 --itemized
 
-# Summary of all customers for the month
+# All customers billing ledger
 python -m tiffin.cli bills --month 2026-10
-```
 
-### 8. Interactive Terminal Mode
-```bash
+# Interactive terminal menu
 python -m tiffin.cli interactive
 ```
 
 ---
 
-## 🌐 Web Dashboard
+## 📜 Submission Deliverables
 
-A visual control panel for mobile or desktop browsers:
-
-```bash
-python web/app.py
-```
-Open **http://localhost:5000** in your browser:
-- **Kitchen Dispatch**: Real-time counter of tiffins to cook today vs. skipped meals.
-- **Customer Directory & Phone Search**: View pause history, subscribe new customers, and toggle pause/resume.
-- **Billing & Invoice Generator**: 1-click printable tax invoice with day-by-day delivery breakdown for customers.
-
----
-
-## 🧪 Automated Testing
-
-Run the full test suite covering billing math, calendar logic, and state transitions:
-
-```bash
-pytest -v
-```
-
-### Test Coverage Highlights:
-- `test_full_month_delivery_matches_plan_price`: Validates zero rounding drift on full attendance.
-- `test_one_week_pause_pro_rating`: Validates pro-rated deduction for paused days.
-- `test_weekend_overlapping_pause`: Ensures non-working weekend days are not counted as pause credits.
-- `test_mid_month_subscription_pro_rating`: Ensures prior weekdays are excluded for mid-month subscribers.
-- `test_cross_month_pause_isolation`: Confirms pause windows spanning two months are separated cleanly.
-- `test_entire_month_paused_results_in_zero_bill`: Confirms $0.00 bill when away the whole month.
-- `test_overlap_pause_rejected`: Rejects conflicting or duplicate pause date ranges.
-- `test_leap_year_february_weekdays`: Tests 29-day February weekday edge cases.
-
----
-
-## 📂 Project Structure
-
-```
-tiffin-service/
-├── tiffin/
-│   ├── __init__.py          # Package exports
-│   ├── models.py            # Domain entities (Customer, Plan, Subscription, PauseRecord, Bill)
-│   ├── calendar_utils.py    # Weekday counting, holidays, range calculations
-│   ├── billing.py           # Pro-rated calculation engine & itemized day breakdown
-│   ├── service.py           # High-level business facade (subscribe, pause, resume, dispatch)
-│   ├── storage.py           # SQLite repository with transactional integrity
-│   └── cli.py               # Command-line interface with interactive mode
-├── web/
-│   ├── app.py               # Flask application server
-│   └── templates/
-│       └── index.html       # Responsive Tailwind CSS dashboard and invoice view
-├── tests/
-│   ├── test_calendar.py     # Weekday and date utilities tests
-│   ├── test_billing.py      # Mathematical pro-rating tests
-│   └── test_lifecycle.py    # Lifecycle, dispatch, and phone lookup tests
-├── pyproject.toml           # Package metadata and dependencies
-└── README.md
-```
-
----
-
-## 📜 License
-MIT License. Free for commercial and personal use.
+- `README.md` — Setup, run, debug, and complete REST API documentation.
+- `REASONING.md` — In-depth architectural thought process, domain breakdown, testing, and debugging.
+- `AI_LOGS.md` — Complete conversation with the AI tool, pasted as-is without alterations.

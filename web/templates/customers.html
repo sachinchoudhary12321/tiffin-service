@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Directory & Lookups - Annapurna Tiffin{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Left 2 Cols: Search, Dossier, and Customer Table -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- Search & Sort Bar -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+      <h2 class="text-lg font-bold text-slate-900 mb-3">Search & Filter Customers</h2>
+      <form method="GET" action="{{ url_for('customers_view') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+        <div class="sm:col-span-6 relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+          <input type="text" name="query" value="{{ query or '' }}" placeholder="Search by name, phone, or address..." class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+        <div class="sm:col-span-3">
+          <select name="sort_by" class="w-full px-2.5 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <option value="name" {{ 'selected' if sort_by == 'name' else '' }}>Sort: Name</option>
+            <option value="phone" {{ 'selected' if sort_by == 'phone' else '' }}>Sort: Phone</option>
+            <option value="created_at" {{ 'selected' if sort_by == 'created_at' else '' }}>Sort: Joined Date</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <select name="order" class="w-full px-2.5 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <option value="asc" {{ 'selected' if order == 'asc' else '' }}>Ascending</option>
+            <option value="desc" {{ 'selected' if order == 'desc' else '' }}>Descending</option>
+          </select>
+        </div>
+        <div class="sm:col-span-1">
+          <button type="submit" class="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shadow-sm transition">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Phone Lookup Dossier (if phone selected or searched) -->
+    {% if dossier %}
+      {% if dossier.found %}
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div class="flex flex-wrap justify-between items-start gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <h3 class="text-2xl font-black text-slate-900">{{ dossier.customer.name }}</h3>
+              <p class="text-xs text-slate-500 font-mono mt-0.5"><i class="fa-solid fa-phone mr-1.5"></i>{{ dossier.customer.phone }}</p>
+              {% if dossier.customer.address %}
+                <p class="text-xs text-slate-600 mt-1"><i class="fa-solid fa-map-pin mr-1.5 text-slate-400"></i>{{ dossier.customer.address }}</p>
+              {% endif %}
+            </div>
+            <div>
+              {% if dossier.status_today.status == 'ACTIVE' %}
+                <span class="px-3 py-1.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Active Today
+                </span>
+              {% elif dossier.status_today.status == 'PAUSED' %}
+                <span class="px-3 py-1.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span> Paused Today
+                </span>
+              {% else %}
+                <span class="px-3 py-1.5 text-xs font-bold rounded-full bg-slate-100 text-slate-800">
+                  {{ dossier.status_today.status }}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Plan & Live Pro-Rated Metrics -->
+          {% if dossier.plan and dossier.current_month_bill %}
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-5">
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase">Plan</span>
+                <p class="font-bold text-slate-800 text-xs mt-0.5">{{ dossier.plan.name }}</p>
+                <p class="text-[11px] text-slate-500">Rs. {{ dossier.plan.monthly_price }}/mo</p>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase">Delivered Days</span>
+                <p class="font-bold text-emerald-700 text-base mt-0.5">{{ dossier.current_month_bill.delivered_weekdays }} / {{ dossier.current_month_bill.total_month_weekdays }}</p>
+                <p class="text-[11px] text-slate-500">Rs. {{ dossier.current_month_bill.daily_rate }}/day</p>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase">Paused Days</span>
+                <p class="font-bold text-amber-700 text-base mt-0.5">{{ dossier.current_month_bill.paused_weekdays }} days</p>
+                <p class="text-[11px] text-slate-500">No charge</p>
+              </div>
+              <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <span class="text-[10px] font-semibold text-slate-400 uppercase">Pro-Rated Bill</span>
+                <p class="font-extrabold text-indigo-700 text-base mt-0.5">Rs. {{ dossier.current_month_bill.total_amount }}</p>
+                <p class="text-[11px] text-slate-500">{{ dossier.current_month_bill.month_name }}</p>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Action Controls: Pause & Resume -->
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 mt-4 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Quick Actions for this Customer</h4>
+            <div class="flex flex-wrap gap-3">
+              <!-- Pause Form -->
+              <form method="POST" action="{{ url_for('action_pause') }}" class="flex-1 min-w-[260px] bg-white p-3 rounded-lg border border-slate-200 space-y-2">
+                <input type="hidden" name="phone" value="{{ dossier.customer.phone }}">
+                <span class="text-xs font-bold text-amber-800"><i class="fa-solid fa-pause mr-1"></i>Schedule Pause</span>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label class="text-[10px] text-slate-500 block">From</label>
+                    <input type="date" name="from_date" required class="w-full px-2 py-1 border rounded">
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-500 block">To (Optional)</label>
+                    <input type="date" name="to_date" class="w-full px-2 py-1 border rounded">
+                  </div>
+                </div>
+                <input type="text" name="reason" placeholder="Reason (e.g. Travel, Sick)..." class="w-full px-2 py-1 text-xs border rounded">
+                <button type="submit" class="w-full py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold transition">Apply Pause</button>
+              </form>
+
+              <!-- Resume Form -->
+              <form method="POST" action="{{ url_for('action_resume') }}" class="flex-1 min-w-[200px] bg-white p-3 rounded-lg border border-slate-200 flex flex-col justify-between">
+                <input type="hidden" name="phone" value="{{ dossier.customer.phone }}">
+                <div>
+                  <span class="text-xs font-bold text-emerald-800"><i class="fa-solid fa-play mr-1"></i>Resume Delivery</span>
+                  <p class="text-xs text-slate-500 mt-1">Clears active/indefinite pause.</p>
+                  <div class="mt-2 text-xs">
+                    <label class="text-[10px] text-slate-500 block">Effective Resume Date</label>
+                    <input type="date" name="resume_date" class="w-full px-2 py-1 border rounded">
+                  </div>
+                </div>
+                <button type="submit" class="w-full mt-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition">Resume Now</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Pause History -->
+          {% if dossier.pauses %}
+            <div class="mt-6">
+              <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Pause History</h4>
+              <div class="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden text-xs">
+                {% for p in dossier.pauses %}
+                  <div class="p-3 bg-white flex justify-between items-center">
+                    <div>
+                      <span class="font-semibold text-slate-800">{{ p.start_date }} to {{ p.end_date or 'Indefinite' }}</span>
+                      <span class="text-slate-500 ml-2">({{ p.reason or 'No reason provided' }})</span>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center text-slate-500 text-xs">
+          No customer found with phone <strong>{{ search_phone }}</strong>.
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <!-- Paginated Customer Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+        <h3 class="font-bold text-slate-800 text-sm">
+          Customers ({{ total_count }} total{% if query %} matching "{{ query }}"{% endif %})
+        </h3>
+        <span class="text-xs text-slate-500">Page {{ page }} of {{ total_pages }}</span>
+      </div>
+
+      <div class="divide-y divide-slate-100">
+        {% if customers %}
+          {% for cust in customers %}
+            <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition">
+              <div>
+                <h4 class="font-bold text-slate-900 text-sm">{{ cust.name }}</h4>
+                <p class="text-xs text-slate-500 font-mono">{{ cust.phone }}</p>
+                {% if cust.address %}
+                  <p class="text-xs text-slate-400 mt-0.5 truncate max-w-sm">{{ cust.address }}</p>
+                {% endif %}
+              </div>
+              <a href="{{ url_for('customers_view', phone=cust.phone, query=query, sort_by=sort_by, order=order, page=page) }}" class="px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-lg transition">
+                Inspect Profile &rarr;
+              </a>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="p-8 text-center text-slate-400 text-xs">
+            No customers found matching criteria.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Pagination Footer -->
+      {% if total_pages > 1 %}
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs">
+          {% if page > 1 %}
+            <a href="{{ url_for('customers_view', query=query, sort_by=sort_by, order=order, page=page-1) }}" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-bold hover:bg-slate-100 transition">
+              &larr; Previous
+            </a>
+          {% else %}
+            <span class="px-3 py-1.5 text-slate-300 border border-transparent">&larr; Previous</span>
+          {% endif %}
+
+          <span class="text-slate-500 font-medium">Page {{ page }} of {{ total_pages }}</span>
+
+          {% if page < total_pages %}
+            <a href="{{ url_for('customers_view', query=query, sort_by=sort_by, order=order, page=page+1) }}" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg font-bold hover:bg-slate-100 transition">
+              Next &rarr;
+            </a>
+          {% else %}
+            <span class="px-3 py-1.5 text-slate-300 border border-transparent">Next &rarr;</span>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right Col: Subscribe Customer Form -->
+  <div class="space-y-6">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-user-plus text-amber-600"></i> Subscribe New Customer
+      </h3>
+      <form method="POST" action="{{ url_for('action_subscribe') }}" class="space-y-4 text-xs">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Full Name</label>
+          <input type="text" name="name" required placeholder="e.g. Anjali Gupta" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Phone Number (Unique)</label>
+          <input type="text" name="phone" required placeholder="e.g. 9876543210" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Tiffin Plan</label>
+          <select name="plan_id" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            {% for p in plans %}
+              <option value="{{ p.id }}">{{ p.name }} (Rs. {{ p.monthly_price }}/mo)</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Start Date</label>
+          <input type="date" name="start_date" value="{{ today_str }}" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Delivery Address</label>
+          <textarea name="address" rows="2" placeholder="Building, Wing, Flat, Landmark..." class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Dietary Preferences / Notes</label>
+          <input type="text" name="notes" placeholder="e.g. Mild spice, extra roti..." class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow transition text-xs">
+          Save & Subscribe
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

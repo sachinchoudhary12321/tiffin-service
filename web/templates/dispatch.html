@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Kitchen Dispatch Sheet - Annapurna Tiffin{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Date Selector Header -->
+  <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap justify-between items-center gap-4">
+    <div>
+      <h2 class="text-xl font-bold text-slate-900">Kitchen Dispatch Sheet</h2>
+      <p class="text-xs text-slate-500 mt-0.5">
+        Deliveries for <strong class="text-slate-800">{{ dispatch.day_name }}, {{ dispatch.date }}</strong>
+        {% if not dispatch.is_weekday %}
+          <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">Weekend - No Deliveries</span>
+        {% endif %}
+        {% if dispatch.is_holiday %}
+          <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800">Kitchen Holiday</span>
+        {% endif %}
+      </p>
+    </div>
+    <form method="GET" action="{{ url_for('dispatch_view') }}" class="flex items-center gap-2">
+      <input type="date" name="date" value="{{ dispatch.date }}" class="px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+      <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-sm transition">Change Date</button>
+      <a href="{{ url_for('dispatch_view') }}" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">Today</a>
+    </form>
+  </div>
+
+  <!-- Metric Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <div class="bg-emerald-50 border border-emerald-200 p-5 rounded-2xl flex items-center justify-between">
+      <div>
+        <p class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Active to Cook & Deliver</p>
+        <h3 class="text-3xl font-extrabold text-emerald-900 mt-1">{{ dispatch.active_count }} <span class="text-base font-medium">tiffins</span></h3>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xl shadow-sm">
+        <i class="fa-solid fa-utensils"></i>
+      </div>
+    </div>
+
+    <div class="bg-amber-50 border border-amber-200 p-5 rounded-2xl flex items-center justify-between">
+      <div>
+        <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider">Paused (Do Not Cook)</p>
+        <h3 class="text-3xl font-extrabold text-amber-900 mt-1">{{ dispatch.paused_count }} <span class="text-base font-medium">tiffins</span></h3>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl shadow-sm">
+        <i class="fa-solid fa-pause"></i>
+      </div>
+    </div>
+
+    <div class="bg-indigo-50 border border-indigo-200 p-5 rounded-2xl flex items-center justify-between">
+      <div>
+        <p class="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Total Active Subscribers</p>
+        <h3 class="text-3xl font-extrabold text-indigo-900 mt-1">{{ dispatch.total_subscribed }}</h3>
+      </div>
+      <div class="w-12 h-12 rounded-xl bg-indigo-500 text-white flex items-center justify-center text-xl shadow-sm">
+        <i class="fa-solid fa-users"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lists Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Active Meals -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 bg-emerald-50/50 flex justify-between items-center">
+        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Active Deliveries ({{ dispatch.active_count }})
+        </h3>
+        <span class="text-xs text-emerald-700 font-bold">Pack & Dispatch</span>
+      </div>
+      <div class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+        {% if dispatch.active_deliveries %}
+          {% for item in dispatch.active_deliveries %}
+            <div class="p-4 hover:bg-slate-50 transition">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="font-bold text-slate-900 text-base">{{ item.name }}</h4>
+                  <p class="text-xs text-slate-500 font-mono"><i class="fa-solid fa-phone mr-1"></i>{{ item.phone }}</p>
+                </div>
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                  {{ item.plan_name }}
+                </span>
+              </div>
+              {% if item.address %}
+                <p class="text-xs text-slate-600 mt-2 flex items-start gap-1.5">
+                  <i class="fa-solid fa-location-dot text-slate-400 mt-0.5"></i>
+                  <span>{{ item.address }}</span>
+                </p>
+              {% endif %}
+              {% if item.notes %}
+                <p class="text-xs text-amber-700 mt-1 bg-amber-50 rounded px-2 py-1 inline-block">
+                  <i class="fa-solid fa-note-sticky mr-1"></i>{{ item.notes }}
+                </p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="p-8 text-center text-slate-400 text-xs">
+            No active deliveries scheduled for this date.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Paused Customers -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 bg-amber-50/50 flex justify-between items-center">
+        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Paused Customers ({{ dispatch.paused_count }})
+        </h3>
+        <span class="text-xs text-amber-700 font-bold">Do Not Cook / Zero Charge</span>
+      </div>
+      <div class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+        {% if dispatch.paused_deliveries %}
+          {% for item in dispatch.paused_deliveries %}
+            <div class="p-4 hover:bg-slate-50 transition">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="font-bold text-slate-900 text-base">{{ item.name }}</h4>
+                  <p class="text-xs text-slate-500 font-mono"><i class="fa-solid fa-phone mr-1"></i>{{ item.phone }}</p>
+                </div>
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">
+                  {{ item.plan_name }}
+                </span>
+              </div>
+              <div class="mt-2 text-xs text-slate-600 bg-slate-50 rounded-lg p-2.5 border border-slate-100">
+                <p><strong>Reason:</strong> {{ item.reason }}</p>
+                <p class="text-amber-700 font-medium mt-0.5"><strong>Resumes:</strong> {{ item.resume_date }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="p-8 text-center text-slate-400 text-xs">
+            No paused subscriptions on this date.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

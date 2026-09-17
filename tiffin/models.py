@@ -69,6 +69,17 @@ class PauseRecord:
 
 
 @dataclass
+class User:
+    username: str
+    password_hash: str
+    email: str = ""
+    role: str = "owner"
+    created_at: str = ""
+    id: Optional[int] = None
+
+
+
+@dataclass
 class ItemizedDay:
     date: date
     day_name: str
