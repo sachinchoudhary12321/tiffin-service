@@ -16,6 +16,78 @@ def parse_date(d: str | date) -> date:
     return datetime.strptime(d.strip(), "%Y-%m-%d").date()
 
 
+def parse_flexible_date(d: str | date | None) -> Optional[date]:
+    """
+    Parse a date from various formats commonly found in messy spreadsheets.
+    Supports:
+      - 2026-10-01, 2026/10/01, 2026.10.01
+      - 01/10/2026, 01-10-2026, 01.10.2026
+      - 10/01/2026, 10-01-2026
+      - October 1, 2026, Oct 1, 2026, 1 Oct 2026
+      - ISO datetime strings (2026-10-01T12:00:00)
+    Returns None if unparseable.
+    """
+    if d is None:
+        return None
+    if isinstance(d, date):
+        return d
+    if isinstance(d, datetime):
+        return d.date()
+
+    cleaned = str(d).strip()
+    if not cleaned:
+        return None
+
+    # Try ISO fromisoformat first
+    try:
+        # Handle ISO strings with T
+        if "T" in cleaned:
+            return datetime.fromisoformat(cleaned).date()
+    except Exception:
+        pass
+
+    # Check for smart disambiguation when year is at the end (e.g. 10/25/2026 vs 25/10/2026)
+    import re
+    parts = re.split(r"[/.-]", cleaned)
+    if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit() and len(parts[2]) == 4:
+        v0, v1, year_val = int(parts[0]), int(parts[1]), int(parts[2])
+        if v0 > 12 and 1 <= v1 <= 12:
+            try:
+                return date(year_val, v1, v0)
+            except ValueError:
+                pass
+        elif v1 > 12 and 1 <= v0 <= 12:
+            try:
+                return date(year_val, v0, v1)
+            except ValueError:
+                pass
+
+    formats = [
+        "%Y-%m-%d",
+        "%d/%m/%Y",
+        "%m/%d/%Y",
+        "%d-%m-%Y",
+        "%m-%d-%Y",
+        "%Y/%m/%d",
+        "%d.%m.%Y",
+        "%Y.%m.%d",
+        "%B %d, %Y",
+        "%b %d, %Y",
+        "%d %B %Y",
+        "%d %b %Y",
+        "%d-%b-%Y",
+        "%d-%B-%Y",
+    ]
+
+    for fmt in formats:
+        try:
+            return datetime.strptime(cleaned, fmt).date()
+        except ValueError:
+            continue
+
+    return None
+
+
 def format_date(d: date) -> str:
     """Format date as YYYY-MM-DD."""
     return d.strftime("%Y-%m-%d")

@@ -269,3 +269,48 @@ Our platform was engineered specifically with the architecture to solve these fa
 - **Digital Hygiene Compliance Badging**: FSSAI license verification and mandatory daily morning sanitization checklist.
 - **Automated Photo-Dispute & 60s Refund Bot**: Instant automated wallet refund for spoiled/missing dishes.
 
+---
+
+## 10. Official Graded Twists Architecture & Mathematical Invariance
+
+### Level 1 — T1 (integrate): "Each morning, notify the customers due a delivery today via the Notification Service"
+- **Architectural Requirement**: Triggered via `POST /clock` with a target date and graded via `/outbox`.
+- **Filtering Logic**:
+  $$\text{Deliveries To Notify} = \{ c \in \text{Subscribers} \mid \text{is\_weekday}(\text{date}) \land \neg\text{is\_holiday}(\text{date}) \land \text{start} \le \text{date} \le \text{end} \land \neg\text{is\_paused}(c, \text{date}) \}$$
+- **Design Decisions**:
+  - Outbox is stored in a dedicated relational table (`outbox`) with idempotency and batch retrieval.
+  - If triggered on a weekend (Saturday/Sunday) or kitchen holiday, the engine correctly generates **0 notifications**.
+  - On weekdays, each eligible subscriber receives an outbox notification containing customer name, phone, meal plan name, target date, and greeting message.
+  - Test verification: `test_level1_clock_and_outbox_workflow` verifies that weekend clock triggers produce 0 notifications, weekdays produce active deliveries, and `/outbox` can be fetched and cleared.
+
+### Level 2 — T6 (lifecycle): "Transfer a subscription to a new customer mid-cycle; the plan and cycle carry over, billing splits by who was served"
+- **Architectural Requirement**: Mid-cycle handover of a meal plan from customer A to customer B without breaking billing invariants.
+- **Mathematical Invariance**:
+  - Let $P$ be the monthly plan price and $W$ be total working weekdays in the month.
+  - The daily rate is strictly $\text{Rate} = \frac{P}{W}$.
+  - Customer A is active on weekdays $1 \le d < \text{effective\_date}$.
+  - Customer B is active on weekdays $\text{effective\_date} \le d \le \text{month\_end}$.
+  - Since every weekday in the month is served to either customer A or customer B (assuming no pauses):
+    $$\text{Bill}_A = D_A \times \text{Rate}, \quad \text{Bill}_B = D_B \times \text{Rate}$$
+    $$\text{Bill}_A + \text{Bill}_B = (D_A + D_B) \times \frac{P}{W} = W \times \frac{P}{W} = P$$
+  - The sum of the two pro-rated bills exactly equals the full monthly plan price, ensuring **zero revenue leakage** and **zero double-charging**.
+- **Implementation Mechanism**:
+  1. Terminate original subscription $A$ on $\text{effective\_date} - 1$.
+  2. Create/register transferee customer $B$ if not already existing.
+  3. Create new subscription for $B$ starting on $\text{effective\_date}$ carrying over the exact `plan_id`.
+  4. Write an immutable audit log entry into `subscription_transfers`.
+
+### Level 3 — T4 (messy data): "Import a messy customer list into clean subscriptions with an { imported, deduped, rejected } report"
+- **Architectural Requirement**: Parse corrupted, multi-format spreadsheets with duplicate phones, messy prefixes (`+91`, `91`, leading `0`, spaces, dashes), mixed date formats, and empty fields.
+- **Resilience Mechanisms**:
+  - **Flexible Multi-Format Date Parser (`parse_flexible_date`)**:
+    - Handles ISO (`YYYY-MM-DD`, `YYYY-MM-DDTHH:MM:SS`), European/Indian (`DD/MM/YYYY`, `DD-MM-YYYY`), US (`MM/DD/YYYY` when day $> 12$), dot-separated (`DD.MM.YYYY`), and written text dates (`"October 1, 2026"`, `"1 Oct 2026"`).
+  - **Canonical 10-Digit Phone Normalization (`canonical_phone_key`)**:
+    - Strips all non-digits, strips country code `91` (if 12 digits) or `0` (if 11 digits), isolating the 10-digit national number.
+  - **Deduplication Engine**:
+    - Rejects intra-batch duplicate phone numbers.
+    - Detects and dedupes customers who already possess an active subscription in SQLite.
+  - **Categorization Report**:
+    - Returns structured JSON `{ "imported": [...], "deduped": [...], "rejected": [...] }` with line-by-line failure reasons (e.g. missing customer name, phone with $< 8$ digits, unparseable date).
+
+

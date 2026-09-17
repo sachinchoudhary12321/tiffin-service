@@ -75,6 +75,29 @@ class Storage:
                     date TEXT PRIMARY KEY,
                     name TEXT NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS outbox (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    recipient TEXT NOT NULL,
+                    customer_name TEXT NOT NULL,
+                    delivery_date TEXT NOT NULL,
+                    plan_name TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    status TEXT DEFAULT 'SENT',
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS transfers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    from_phone TEXT NOT NULL,
+                    to_phone TEXT NOT NULL,
+                    plan_id TEXT NOT NULL,
+                    cycle_year INTEGER NOT NULL,
+                    cycle_month INTEGER NOT NULL,
+                    effective_date TEXT NOT NULL,
+                    notes TEXT DEFAULT '',
+                    created_at TEXT NOT NULL
+                );
             """)
 
             cur = conn.cursor()
@@ -423,3 +446,124 @@ class Storage:
                 for r in rows
             ]
             return customers, total_count, total_pages
+
+    # --- Level 1 (T1): Notification Outbox ---
+    def save_outbox_entry(
+        self,
+        recipient: str,
+        customer_name: str,
+        delivery_date: str,
+        plan_name: str,
+        message: str,
+        status: str = "SENT",
+    ) -> int:
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO outbox (recipient, customer_name, delivery_date, plan_name, message, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (recipient, customer_name, delivery_date, plan_name, message, status, datetime.now().isoformat()),
+            )
+            conn.commit()
+            return cur.lastrowid
+
+    def get_outbox(self, delivery_date: Optional[str] = None) -> List[dict]:
+        with self._get_connection() as conn:
+            if delivery_date:
+                rows = conn.execute(
+                    "SELECT * FROM outbox WHERE delivery_date = ? ORDER BY id ASC",
+                    (delivery_date,),
+                ).fetchall()
+            else:
+                rows = conn.execute("SELECT * FROM outbox ORDER BY id ASC").fetchall()
+
+            return [
+                {
+                    "id": r["id"],
+                    "recipient": r["recipient"],
+                    "customer_name": r["customer_name"],
+                    "delivery_date": r["delivery_date"],
+                    "plan_name": r["plan_name"],
+                    "message": r["message"],
+                    "status": r["status"],
+                    "created_at": r["created_at"],
+                }
+                for r in rows
+            ]
+
+    def clear_outbox(self) -> None:
+        with self._get_connection() as conn:
+            conn.execute("DELETE FROM outbox")
+            conn.commit()
+
+    # --- Level 2 (T6): Mid-Cycle Subscription Transfers ---
+    def record_transfer(
+        self,
+        from_phone: str,
+        to_phone: str,
+        plan_id: str,
+        cycle_year: int,
+        cycle_month: int,
+        effective_date: str,
+        notes: str = "",
+    ) -> int:
+        with self._get_connection() as conn:
+            cur = conn.execute(
+                """
+                INSERT INTO transfers (from_phone, to_phone, plan_id, cycle_year, cycle_month, effective_date, notes, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (from_phone, to_phone, plan_id, cycle_year, cycle_month, effective_date, notes, datetime.now().isoformat()),
+            )
+            conn.commit()
+            return cur.lastrowid
+
+    def get_transfers(self, cycle_year: Optional[int] = None, cycle_month: Optional[int] = None) -> List[dict]:
+        with self._get_connection() as conn:
+            if cycle_year and cycle_month:
+                rows = conn.execute(
+                    "SELECT * FROM transfers WHERE cycle_year = ? AND cycle_month = ? ORDER BY id ASC",
+                    (cycle_year, cycle_month),
+                ).fetchall()
+            else:
+                rows = conn.execute("SELECT * FROM transfers ORDER BY id DESC").fetchall()
+
+            return [
+                {
+                    "id": r["id"],
+                    "from_phone": r["from_phone"],
+                    "to_phone": r["to_phone"],
+                    "plan_id": r["plan_id"],
+                    "cycle_year": r["cycle_year"],
+                    "cycle_month": r["cycle_month"],
+                    "effective_date": r["effective_date"],
+                    "notes": r["notes"],
+                    "created_at": r["created_at"],
+                }
+                for r in rows
+            ]
+
+    def get_transfer_for_customer(self, phone: str, cycle_year: int, cycle_month: int) -> Optional[dict]:
+        with self._get_connection() as conn:
+            row = conn.execute(
+                """
+                SELECT * FROM transfers
+                WHERE (from_phone = ? OR to_phone = ?) AND cycle_year = ? AND cycle_month = ?
+                ORDER BY id DESC LIMIT 1
+                """,
+                (phone, phone, cycle_year, cycle_month),
+            ).fetchone()
+            if not row:
+                return None
+            return {
+                "id": row["id"],
+                "from_phone": row["from_phone"],
+                "to_phone": row["to_phone"],
+                "plan_id": row["plan_id"],
+                "cycle_year": row["cycle_year"],
+                "cycle_month": row["cycle_month"],
+                "effective_date": row["effective_date"],
+                "notes": row["notes"],
+                "created_at": row["created_at"],
+            }

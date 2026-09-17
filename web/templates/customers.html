@@ -125,6 +125,29 @@
                 </div>
                 <button type="submit" class="w-full mt-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition">Resume Now</button>
               </form>
+
+              <!-- Level 2 (T6) Mid-Cycle Transfer Form -->
+              <form method="POST" action="{{ url_for('action_transfer') }}" class="flex-1 min-w-[260px] bg-white p-3 rounded-lg border border-indigo-200 space-y-2">
+                <input type="hidden" name="from_phone" value="{{ dossier.customer.phone }}">
+                <span class="text-xs font-bold text-indigo-800 flex items-center gap-1"><i class="fa-solid fa-arrow-right-arrow-left"></i>Transfer Subscription (Mid-Cycle)</span>
+                <p class="text-[11px] text-slate-500">Splits monthly bill strictly by who was served.</p>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label class="text-[10px] text-slate-500 block">New Customer Name</label>
+                    <input type="text" name="to_name" required placeholder="Transferee Name" class="w-full px-2 py-1 border rounded">
+                  </div>
+                  <div>
+                    <label class="text-[10px] text-slate-500 block">New Phone</label>
+                    <input type="text" name="to_phone" required placeholder="10-digit Phone" class="w-full px-2 py-1 border rounded">
+                  </div>
+                </div>
+                <div>
+                  <label class="text-[10px] text-slate-500 block">Effective Transfer Date</label>
+                  <input type="date" name="effective_date" required value="{{ today_str }}" class="w-full px-2 py-1 text-xs border rounded">
+                </div>
+                <input type="text" name="notes" placeholder="Transfer notes (optional)..." class="w-full px-2 py-1 text-xs border rounded">
+                <button type="submit" class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition shadow-sm">Execute Mid-Cycle Transfer</button>
+              </form>
             </div>
           </div>
 
@@ -246,6 +269,35 @@
         </div>
         <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow transition text-xs">
           Save & Subscribe
+        </button>
+      </form>
+    </div>
+
+    <!-- Level 3 (T4): Ingest Messy Customer List Card -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <h3 class="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-file-import text-indigo-600"></i> Import Customer List (T4)
+      </h3>
+      <p class="text-xs text-slate-500 mb-4">
+        Handles duplicate phones, messy formats (<code class="bg-slate-100 px-1 py-0.5 rounded text-[10px]">+91</code>, spaces, dashes), mixed dates (<code class="bg-slate-100 px-1 py-0.5 rounded text-[10px]">DD/MM/YYYY</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-[10px]">YYYY-MM-DD</code>), and generates clean <strong class="text-slate-700">{ imported, deduped, rejected }</strong> logs.
+      </p>
+
+      <form method="POST" action="{{ url_for('action_import') }}" enctype="multipart/form-data" class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Option A: Upload CSV File</label>
+          <input type="file" name="file" accept=".csv" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+        </div>
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-slate-200"></div>
+          <span class="flex-shrink mx-2 text-slate-400 text-[10px] uppercase font-bold">Or</span>
+          <div class="flex-grow border-t border-slate-200"></div>
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Option B: Paste Raw CSV / JSON</label>
+          <textarea name="raw_data" rows="3" placeholder='name,phone,start_date,plan_id&#10;Aarav,9876543210,01/10/2026,standard_veg' class="w-full px-3 py-2 border rounded-xl font-mono text-[11px] focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow transition text-xs flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Process & Deduplicate Import
         </button>
       </form>
     </div>

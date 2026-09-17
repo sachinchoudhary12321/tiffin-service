@@ -74,9 +74,15 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="triggerClock('{{ dispatch.date }}')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition inline-flex items-center shadow-sm">
+          <i class="fa-solid fa-bell mr-1.5"></i> Trigger Morning Clock (POST /clock)
+        </button>
+        <a href="{{ url_for('get_outbox_notifications', date=dispatch.date) }}" target="_blank" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition inline-flex items-center shadow-sm">
+          <i class="fa-solid fa-inbox mr-1.5 text-indigo-600"></i> View Outbox
+        </a>
         <a href="{{ url_for('export_dispatch', date=dispatch.date) }}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition inline-flex items-center shadow-sm">
-          <i class="fa-solid fa-file-csv mr-1.5 text-amber-600"></i> Export Delivery Run-Sheet (CSV)
+          <i class="fa-solid fa-file-csv mr-1.5 text-amber-600"></i> Export Run-Sheet (CSV)
         </a>
       </div>
     </div>
@@ -174,8 +180,28 @@
             No paused subscriptions on this date.
           </div>
         {% endif %}
-      </div>
     </div>
   </div>
 </div>
+
+<script>
+async function triggerClock(targetDate) {
+  try {
+    const res = await fetch('/clock', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({date: targetDate})
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(`Morning Clock Triggered for ${targetDate}!\n\nDeliveries Notified: ${data.dispatched_count}\nWeekdays: ${data.is_weekday}\nStatus: Outbox populated.`);
+      window.location.reload();
+    } else {
+      alert(`Error triggering clock: ${data.error || 'Unknown error'}`);
+    }
+  } catch (err) {
+    alert(`Request failed: ${err}`);
+  }
+}
+</script>
 {% endblock %}

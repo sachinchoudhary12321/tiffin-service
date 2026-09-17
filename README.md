@@ -19,7 +19,7 @@ Customers subscribe to a monthly meal plan for weekday lunch deliveries, pause d
 - **Customer Self-Service Bill Portal (`/my-bill`)**: Public portal where subscribers check their personal live attendance calendar and verified pro-rated bill by phone number.
 - **Kitchen Meal Plan Matrix & Dietary Alerts**: Real-time kitchen tally of meal plans (Standard Veg, Deluxe Veg, Non-Veg) and special dietary instructions (no onion-garlic, extra roti, mild spice).
 - **One-Page Product Landing Page**: Integrated showcase covering What it is, Key features, Target audience, How it helps, and Three features to build next.
-- **Automated Test Suite**: 38 comprehensive unit, integration, and API tests with 100% pass rate.
+- **Automated Test Suite**: 42 comprehensive unit, integration, twist, and API tests with 100% pass rate.
 
 ---
 
@@ -81,6 +81,9 @@ pytest tests/test_api_and_web.py -v
 
 # Zero-hallucination AI reasoning chatbot tests
 pytest tests/test_chatbot.py -v
+
+# Official Round 2 Twists (Level 1 T1 clock/outbox, Level 2 T6 transfer, Level 3 T4 import)
+pytest tests/test_twists_t1_t6_t4.py -v
 ```
 
 ### Debugging Tips:
@@ -473,6 +476,136 @@ Ask the interactive conversational assistant questions about meal schemes, pro-r
       "Delivered days: 17",
       "Simulated bill: Rs. 2318.18"
     ]
+  }
+  ```
+
+---
+
+### 🎯 Official Graded Twists Endpoints (Levels 1, 2, 3)
+
+#### Level 1 — T1 (integrate): Morning Clock & Notification Outbox
+
+##### `POST /clock`
+Simulate the morning delivery trigger for a target date. Identifies all customers due a delivery today (**active, weekday, not paused, not kitchen holiday**) and pushes them to the Notification Service Outbox.
+- **Request Body**:
+  ```json
+  {
+    "date": "2026-10-01"
+  }
+  ```
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "date": "2026-10-01",
+    "is_weekday": true,
+    "is_holiday": false,
+    "dispatched_count": 14,
+    "message": "Processed 14 notifications into outbox"
+  }
+  ```
+
+##### `GET /outbox`
+Inspect notifications queued by the clock runner.
+- **Query Parameters**: `date=YYYY-MM-DD` (optional, default: all pending)
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "count": 1,
+    "outbox": [
+      {
+        "id": 1,
+        "target_date": "2026-10-01",
+        "customer_phone": "9876543210",
+        "customer_name": "Amit Sharma",
+        "plan_id": "standard_veg",
+        "plan_name": "Standard Vegetarian",
+        "message": "Good morning Amit Sharma! Your Standard Vegetarian lunch delivery is scheduled for today (2026-10-01). Enjoy your meal!",
+        "status": "QUEUED"
+      }
+    ]
+  }
+  ```
+
+##### `DELETE /outbox`
+Clear processed or test notifications from the outbox.
+
+---
+
+#### Level 2 — T6 (lifecycle): Mid-Cycle Subscription Transfer
+
+##### `POST /api/subscriptions/transfer`
+Transfer an active subscription to a new customer mid-cycle. The plan and billing cycle carry over seamlessly, and billing splits strictly by who was actually served.
+- **Request Body**:
+  ```json
+  {
+    "from_phone": "9811111111",
+    "to_phone": "9822222222",
+    "to_name": "Neha Gupta",
+    "effective_date": "2026-10-15",
+    "to_address": "Flat 402, Green Meadows",
+    "notes": "Transfer mid-month"
+  }
+  ```
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "transfer_id": 1,
+    "from_phone": "9811111111",
+    "to_phone": "9822222222",
+    "to_name": "Neha Gupta",
+    "plan_id": "standard_veg",
+    "plan_name": "Standard Vegetarian",
+    "effective_date": "2026-10-15",
+    "cycle": "2026-10",
+    "message": "Subscription for Standard Vegetarian transferred from 9811111111 to Neha Gupta (9822222222) effective 2026-10-15. Billing splits by who was served."
+  }
+  ```
+
+##### `GET /api/subscriptions/transfers`
+Audit log of all mid-cycle transfers.
+- **Query Parameters**: `year=YYYY` & `month=MM` (optional)
+
+---
+
+#### Level 3 — T4 (messy data): Ingest Messy Customer List
+
+##### `POST /api/import` or `POST /api/customers/import`
+Ingest messy customer spreadsheets containing duplicated phone numbers, inconsistent phone formats (`+91`, spaces, dashes), mixed date formats (`DD/MM/YYYY`, `MM/DD/YYYY`, `YYYY-MM-DD`, text months), and blanks into clean subscriptions with an `{ imported, deduped, rejected }` report.
+- **Payload**: Accepts either a **multipart CSV file upload** (`file`) or a **JSON array** (`customers`).
+- **Sample Request (JSON)**:
+  ```json
+  {
+    "customers": [
+      { "name": "Rahul Sharma", "phone": "+91 98666 66666", "start_date": "01/10/2026", "plan_id": "standard_veg" },
+      { "name": "Pooja Verma", "phone": "98777-77777", "start_date": "2026-10-01" },
+      { "name": "Deepak (Duplicate)", "phone": "9877777777", "start_date": "2026-10-15" },
+      { "name": "", "phone": "9888888888" }
+    ]
+  }
+  ```
+- **Response (200 OK)**:
+  ```json
+  {
+    "success": true,
+    "imported": [
+      { "row": 1, "name": "Rahul Sharma", "phone": "+919866666666", "plan_id": "standard_veg", "start_date": "2026-10-01" },
+      { "row": 2, "name": "Pooja Verma", "phone": "9877777777", "plan_id": "standard_veg", "start_date": "2026-10-01" }
+    ],
+    "deduped": [
+      { "row": 3, "phone": "9877777777", "name": "Deepak (Duplicate)", "reason": "Duplicate phone number encountered in current import batch (skipped duplicate)" }
+    ],
+    "rejected": [
+      { "row": 4, "raw": { "name": "", "phone": "9888888888" }, "reason": "Missing customer name (blank field)" }
+    ],
+    "summary": {
+      "total_rows": 4,
+      "imported_count": 2,
+      "deduped_count": 1,
+      "rejected_count": 1
+    }
   }
   ```
 

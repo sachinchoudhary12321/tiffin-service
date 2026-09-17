@@ -1589,3 +1589,38 @@ The current local time is: 2026-09-17T16:02:54+05:30.
 > **Tool Executed**: run_command - *"Count transcript lines"*
 
 > **Tool Executed**: run_command - *"Regenerate AI_LOGS.md with top market analysis"*
+
+---
+
+### Phase 10: Official Round 2 Twists Implementation & GitHub Push
+
+#### Instructions Received:
+1. Implement the 3 official graded twists:
+   - **Level 1 — T1 (integrate)**: Each morning, notify customers due a delivery today via `/outbox` after `POST /clock`.
+   - **Level 2 — T6 (lifecycle)**: Transfer a subscription mid-cycle; plan and cycle carry over, billing splits strictly by who was served.
+   - **Level 3 — T4 (messy data)**: Import a messy customer list (dup phones, mixed date formats, blanks) into clean subscriptions with an `{ imported, deduped, rejected }` report.
+2. Push all code, documentation, and tests to the GitHub repository: `https://github.com/sachinchoudhary12321/tiffin-service`.
+
+#### Tool Executions & Actions:
+- **`calendar_utils.py`**: Added `parse_flexible_date()` supporting ISO, Indian (`DD/MM/YYYY`), US (`MM/DD/YYYY`), dot/hyphen separators, and written text dates.
+- **`storage.py`**: Added relational tables `outbox` and `subscription_transfers`. Added methods: `save_outbox_entry`, `get_outbox`, `clear_outbox`, `record_transfer`, `get_transfers`, `get_transfer_for_customer`.
+- **`service.py`**:
+  - Implemented `tick_clock(target_date)` to filter active unpaused weekday deliveries and queue to `outbox`.
+  - Implemented `transfer_subscription()` with strict mid-cycle billing invariance.
+  - Implemented `import_messy_customers()` with canonical 10-digit phone deduplication (`canonical_phone_key`) and structured report generation `{ imported, deduped, rejected }`.
+- **`web/app.py`**:
+  - Added REST endpoints: `POST /clock`, `GET /outbox`, `DELETE /outbox`.
+  - Added transfer endpoints: `POST /api/subscriptions/transfer`, `GET /api/subscriptions/transfers`, and web action `/customers/transfer`.
+  - Added import endpoints: `POST /api/import`, `POST /api/customers/import`, and web action `/customers/import`.
+- **`tests/test_twists_t1_t6_t4.py`**:
+  - Tested Level 1 (`/clock` on weekend = 0 notifications, weekday = active delivery notifications in `/outbox`).
+  - Tested Level 2 (mid-cycle transfer: Anand served 10 days = Rs. 1363.64, Neha served 12 days = Rs. 1636.36, total = Rs. 3000.00).
+  - Tested Level 3 (messy import: duplicate phones in batch, existing DB subscribers, missing names, invalid numbers, corrupt dates).
+  - Tested flexible date parsing across all supported variations.
+- **Test Suite Pass Rate**: All 42 unit, integration, and twist tests passed with 100% success in 7.74s.
+- **Web UI Enhancements**:
+  - `web/templates/dispatch.html`: Added 1-click "Trigger Morning Clock (POST /clock)" button with outbox modal and link.
+  - `web/templates/customers.html`: Added Mid-Cycle Transfer form in customer profile dossier and "Import Messy Customers (T4)" component with CSV upload and raw text parsing.
+- **Documentation**: Updated `README.md` and `REASONING.md` with complete twist endpoint documentation and mathematical billing invariance proofs.
+- **Git Remote Synchronization**: Staged all changes, created commit, and pushed to `origin main` on GitHub.
+

@@ -197,6 +197,65 @@ def action_resume():
         return redirect(url_for("customers_view", phone=phone))
 
 
+@app.route("/customers/transfer", methods=["POST"])
+def action_transfer():
+    from_phone = request.form.get("from_phone", "").strip()
+    to_phone = request.form.get("to_phone", "").strip()
+    to_name = request.form.get("to_name", "").strip()
+    to_address = request.form.get("to_address", "").strip()
+    effective_date = request.form.get("effective_date", "").strip()
+    notes = request.form.get("notes", "").strip()
+
+    try:
+        res = service.transfer_subscription(
+            from_phone=from_phone,
+            to_phone=to_phone,
+            to_name=to_name,
+            effective_date=effective_date,
+            to_address=to_address,
+            notes=notes,
+        )
+        flash(res["message"], "success")
+        return redirect(url_for("customers_view", phone=to_phone))
+    except Exception as e:
+        flash(f"Error transferring subscription: {e}", "error")
+        return redirect(url_for("customers_view", phone=from_phone))
+
+
+@app.route("/customers/import", methods=["POST"])
+def action_import():
+    records = []
+    if "file" in request.files:
+        uploaded_file = request.files["file"]
+        if uploaded_file and uploaded_file.filename:
+            content = uploaded_file.stream.read().decode("utf-8", errors="replace")
+            reader = csv.DictReader(io.StringIO(content))
+            for row in reader:
+                records.append({k.strip().lower(): v.strip() for k, v in row.items() if k})
+    elif request.form.get("raw_data"):
+        raw_text = request.form.get("raw_data", "").strip()
+        if raw_text.startswith("["):
+            import json
+            records = json.loads(raw_text)
+        else:
+            reader = csv.DictReader(io.StringIO(raw_text))
+            for row in reader:
+                records.append({k.strip().lower(): v.strip() for k, v in row.items() if k})
+
+    if not records:
+        flash("No valid records found to import. Provide CSV file or text.", "error")
+        return redirect(url_for("customers_view"))
+
+    try:
+        report = service.import_messy_customers(records)
+        summary = report["summary"]
+        flash(f"Import Report: {summary['imported_count']} imported, {summary['deduped_count']} deduped, {summary['rejected_count']} rejected.", "info")
+        return redirect(url_for("customers_view"))
+    except Exception as e:
+        flash(f"Error during import: {e}", "error")
+        return redirect(url_for("customers_view"))
+
+
 @app.route("/billing")
 def billing_view():
     month_str = request.args.get("month")
@@ -633,6 +692,137 @@ def api_chat():
             "intent": result["intent"],
             "grounded_facts": result["grounded_facts"],
         }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# =============================================================================
+# ROUND 2 TWIST ENDPOINTS: LEVEL 1 (T1), LEVEL 2 (T6), LEVEL 3 (T4)
+# =============================================================================
+
+# --- Level 1 — T1 (integrate): /clock & /outbox ---
+@app.route("/clock", methods=["POST"])
+def api_clock():
+    """
+    Level 1 (T1): Dispatches morning notifications for customers due a delivery
+    today (active subscription, weekday, not on holiday, not paused).
+    Graded via /outbox.
+    """
+    data = request.get_json(silent=True) or {}
+    target_date = data.get("date") or request.args.get("date")
+
+    try:
+        notifications = service.tick_clock(target_date)
+        t_date = parse_date(target_date) if target_date else date.today()
+        return jsonify({
+            "success": True,
+            "date": format_date(t_date),
+            "dispatched_count": len(notifications),
+            "outbox": notifications,
+        }), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/outbox", methods=["GET", "DELETE"])
+def api_outbox():
+    """
+    Level 1 (T1): Notification Outbox.
+    GET returns all queued/sent notifications.
+    DELETE clears the outbox.
+    """
+    if request.method == "DELETE":
+        service.clear_outbox()
+        return jsonify({"success": True, "message": "Outbox cleared successfully"}), 200
+
+    target_date = request.args.get("date")
+    outbox_items = service.get_outbox(target_date)
+    return jsonify({
+        "success": True,
+        "count": len(outbox_items),
+        "outbox": outbox_items,
+    }), 200
+
+
+# --- Level 2 — T6 (lifecycle): Mid-Cycle Subscription Transfer ---
+@app.route("/api/subscriptions/transfer", methods=["POST"])
+def api_subscription_transfer():
+    """
+    Level 2 (T6): Transfer a subscription to a new customer mid-cycle.
+    The plan and cycle carry over, billing splits strictly by who was served.
+    """
+    data = request.get_json() or {}
+    from_phone = data.get("from_phone", "").strip()
+    to_phone = data.get("to_phone", "").strip()
+    to_name = data.get("to_name", "").strip()
+    effective_date = data.get("effective_date", "").strip()
+    to_address = data.get("to_address", "").strip()
+    notes = data.get("notes", "").strip()
+
+    if not from_phone or not to_phone or not effective_date:
+        return jsonify({
+            "success": False,
+            "error": "from_phone, to_phone, and effective_date are required fields.",
+        }), 400
+
+    try:
+        result = service.transfer_subscription(
+            from_phone=from_phone,
+            to_phone=to_phone,
+            to_name=to_name,
+            effective_date=effective_date,
+            to_address=to_address,
+            notes=notes,
+        )
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/subscriptions/transfers", methods=["GET"])
+def api_list_transfers():
+    year = request.args.get("year", type=int)
+    month = request.args.get("month", type=int)
+    transfers = service.list_transfers(year, month)
+    return jsonify({"success": True, "transfers": transfers}), 200
+
+
+# --- Level 3 — T4 (messy data): Ingest Messy Customer List ---
+@app.route("/api/import", methods=["POST"])
+@app.route("/api/customers/import", methods=["POST"])
+def api_import_customers():
+    """
+    Level 3 (T4): Ingest a messy customer list into clean subscriptions.
+    Accepts JSON array (or {'customers': [...]}) or CSV file upload.
+    Returns { 'imported': [...], 'deduped': [...], 'rejected': [...] }.
+    """
+    records: list = []
+
+    # Check for CSV file upload
+    if "file" in request.files:
+        uploaded_file = request.files["file"]
+        if uploaded_file and uploaded_file.filename:
+            content = uploaded_file.stream.read().decode("utf-8", errors="replace")
+            reader = csv.DictReader(io.StringIO(content))
+            for row in reader:
+                records.append({k.strip().lower(): v.strip() for k, v in row.items() if k})
+
+    if not records:
+        data = request.get_json(silent=True) or {}
+        if isinstance(data, list):
+            records = data
+        elif isinstance(data, dict):
+            records = data.get("customers") or data.get("data") or []
+
+    if not records:
+        return jsonify({
+            "success": False,
+            "error": "No records found in payload. Provide a JSON array or multipart CSV file.",
+        }), 400
+
+    try:
+        report = service.import_messy_customers(records)
+        return jsonify(report), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
