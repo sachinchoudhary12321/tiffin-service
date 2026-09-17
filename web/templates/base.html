@@ -96,19 +96,225 @@
     </div>
   </footer>
 
-  <!-- Floating AI Assistant Shortcut -->
-  <div class="fixed bottom-5 right-5 z-40 no-print">
-    <a href="{{ url_for('assistant_view') }}" class="group flex items-center bg-slate-900 hover:bg-amber-600 text-white rounded-full pl-3.5 pr-4 py-2.5 shadow-2xl transition-all duration-300 transform hover:scale-105 border border-slate-700 hover:border-amber-500">
-      <span class="relative flex h-3 w-3 mr-2">
-        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-      </span>
-      <i class="fa-solid fa-robot mr-2 text-amber-400 group-hover:text-white transition"></i>
-      <div class="text-left leading-tight">
-        <div class="text-[11px] font-bold">Ask AI Assistant</div>
-        <div class="text-[9px] text-slate-400 group-hover:text-amber-100">Zero-Hallucination Reasoning</div>
+  <!-- Modern Floating AI Assistant (Bottom-Left Corner) -->
+  {% if request.endpoint != 'assistant_view' %}
+  <div class="fixed bottom-5 left-5 z-50 no-print">
+    <!-- Floating Chat Window (Initially Hidden) -->
+    <div id="aiFloatingWindow" class="hidden mb-3 w-[370px] max-w-[calc(100vw-2.5rem)] h-[510px] bg-white rounded-2xl shadow-2xl border border-slate-200/90 flex-col overflow-hidden transition-all duration-300 transform origin-bottom-left">
+      <!-- Window Header -->
+      <div class="px-4 py-3 bg-gradient-to-r from-slate-900 to-amber-900 text-white flex items-center justify-between shadow-sm">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-7 h-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold shadow">
+            🍱
+          </div>
+          <div>
+            <div class="text-xs font-bold leading-tight">Annapurna Assistant</div>
+            <div class="text-[10px] text-emerald-400 flex items-center font-medium">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>
+              Grounded &bull; Zero Hallucination
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-1">
+          <a href="{{ url_for('assistant_view') }}" title="Open Full Screen" class="text-slate-300 hover:text-white p-1 rounded transition text-xs">
+            <i class="fa-solid fa-expand"></i>
+          </a>
+          <button onclick="toggleAiWidget()" title="Close" class="text-slate-300 hover:text-white p-1 rounded transition text-sm">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
       </div>
-    </a>
+
+      <!-- Quick Suggestion Chips -->
+      <div class="px-3 py-2 bg-slate-50 border-b border-slate-100 flex gap-1.5 overflow-x-auto text-[11px] whitespace-nowrap scrollbar-none">
+        <button onclick="sendFloatingPrompt('What are your meal plans and prices?')" class="px-2.5 py-1 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition">
+          🍱 Plans
+        </button>
+        <button onclick="sendFloatingPrompt('How is pro-rated billing calculated?')" class="px-2.5 py-1 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition">
+          📐 Math
+        </button>
+        <button onclick="sendFloatingPrompt('What happens if I pause Friday to Monday?')" class="px-2.5 py-1 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition">
+          ⏸️ Pauses
+        </button>
+        <button onclick="sendFloatingPrompt('If I pause for 4 days on standard veg, how much will I pay?')" class="px-2.5 py-1 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition">
+          🧮 Simulate
+        </button>
+      </div>
+
+      <!-- Messages Stream -->
+      <div id="floatingMessages" class="flex-grow p-3.5 overflow-y-auto space-y-3 text-xs">
+        <div class="flex items-start space-x-2">
+          <div class="w-6 h-6 rounded-full bg-amber-600 text-white flex-shrink-0 flex items-center justify-center text-[10px] font-bold mt-0.5">
+            🍱
+          </div>
+          <div class="bg-amber-50/80 border border-amber-200/70 rounded-xl rounded-tl-none p-2.5 text-slate-800 max-w-[85%] leading-relaxed">
+            <p class="font-bold text-amber-950 text-xs">Hi! How can I help you today?</p>
+            <p class="text-[11px] text-slate-600 mt-0.5">Ask about meal schemes, formulas, or check your phone bill.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Input -->
+      <div class="p-2.5 bg-slate-50 border-t border-slate-200">
+        <form id="floatingChatForm" onsubmit="submitFloatingChat(event)" class="flex items-center space-x-1.5">
+          <input 
+            type="text" 
+            id="floatingChatInput" 
+            placeholder="Ask a question or enter phone..." 
+            class="flex-grow px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 focus:border-amber-500 transition shadow-inner"
+            required
+            autocomplete="off"
+          />
+          <button 
+            type="submit" 
+            id="floatingSendBtn" 
+            class="bg-amber-600 hover:bg-amber-700 text-white w-8 h-8 rounded-xl flex items-center justify-center text-xs transition shadow flex-shrink-0 disabled:opacity-50"
+          >
+            <i class="fa-solid fa-paper-plane text-[11px]"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Floating Toggle Button (Bottom-Left) -->
+    <button 
+      id="aiWidgetToggleBtn" 
+      onclick="toggleAiWidget()" 
+      class="group flex items-center bg-slate-900 hover:bg-amber-600 text-white rounded-full pl-3 pr-3.5 py-2.5 shadow-2xl transition-all duration-300 transform hover:scale-105 border border-slate-700 hover:border-amber-500"
+      title="Ask AI Assistant"
+    >
+      <span class="relative flex h-2.5 w-2.5 mr-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+      </span>
+      <i class="fa-solid fa-robot mr-1.5 text-amber-400 group-hover:text-white transition text-xs"></i>
+      <span class="text-xs font-bold tracking-tight">AI Assistant</span>
+    </button>
   </div>
+
+  <script>
+    function toggleAiWidget() {
+      const win = document.getElementById('aiFloatingWindow');
+      if (!win) return;
+      if (win.classList.contains('hidden')) {
+        win.classList.remove('hidden');
+        win.classList.add('flex');
+        document.getElementById('floatingChatInput').focus();
+      } else {
+        win.classList.add('hidden');
+        win.classList.remove('flex');
+      }
+    }
+
+    function sendFloatingPrompt(text) {
+      document.getElementById('floatingChatInput').value = text;
+      submitFloatingChat(null);
+    }
+
+    function formatFloatingMarkdown(text) {
+      if (!text) return '';
+      let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>');
+      html = html.replace(/_(.*?)_/g, '<em class="italic text-slate-600">$1</em>');
+      html = html.replace(/`([^`]+)`/g, '<code class="bg-amber-100/70 text-amber-900 px-1 py-0.5 rounded font-mono text-[11px]">$1</code>');
+      html = html.replace(/• (.*?)(?=(\n|$))/g, '<li class="ml-3 list-disc text-slate-700 text-[11px] leading-snug">$1</li>');
+      html = html.replace(/\$\$(.*?)\$\$/g, '<div class="my-1.5 p-1.5 bg-amber-50/80 border border-amber-200/80 rounded font-mono font-bold text-[11px] text-center">$1</div>');
+      html = html.replace(/\$(.*?)\$/g, '<code class="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono text-[11px]">$1</code>');
+      html = html.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+      return html;
+    }
+
+    async function submitFloatingChat(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('floatingChatInput');
+      const sendBtn = document.getElementById('floatingSendBtn');
+      const container = document.getElementById('floatingMessages');
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Append user msg
+      const userDiv = document.createElement('div');
+      userDiv.className = 'flex items-start justify-end space-x-1.5';
+      userDiv.innerHTML = `
+        <div class="bg-amber-600 text-white rounded-xl rounded-tr-none p-2.5 max-w-[85%] shadow-sm leading-relaxed text-xs">
+          ${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+        </div>
+      `;
+      container.appendChild(userDiv);
+      input.value = '';
+      sendBtn.disabled = true;
+      container.scrollTop = container.scrollHeight;
+
+      // Loading
+      const loadDiv = document.createElement('div');
+      loadDiv.id = 'floatingLoader';
+      loadDiv.className = 'flex items-start space-x-1.5';
+      loadDiv.innerHTML = `
+        <div class="w-6 h-6 rounded-full bg-amber-600 text-white flex-shrink-0 flex items-center justify-center text-[10px] font-bold mt-0.5">
+          🍱
+        </div>
+        <div class="bg-slate-100 rounded-xl rounded-tl-none px-3 py-2 text-slate-500 text-[11px] flex items-center space-x-1.5">
+          <i class="fa-solid fa-spinner fa-spin text-amber-600"></i>
+          <span>Thinking...</span>
+        </div>
+      `;
+      container.appendChild(loadDiv);
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message })
+        });
+        const data = await res.json();
+        loadDiv.remove();
+        sendBtn.disabled = false;
+
+        const botDiv = document.createElement('div');
+        botDiv.className = 'flex items-start space-x-2';
+
+        let reasoningHtml = '';
+        if (data.reasoning && data.reasoning.length > 0) {
+          reasoningHtml = `
+            <details class="mt-1.5 bg-amber-50/70 border border-amber-200/60 rounded-lg p-1.5 text-[10px] text-amber-950">
+              <summary class="cursor-pointer font-bold text-amber-900 select-none flex items-center">
+                <i class="fa-solid fa-brain text-amber-600 mr-1"></i> Reasoning (${data.reasoning.length})
+              </summary>
+              <ul class="mt-1 pl-3 list-disc space-y-0.5 text-slate-600 text-[10px]">
+                ${data.reasoning.map(r => `<li>${r}</li>`).join('')}
+              </ul>
+            </details>
+          `;
+        }
+
+        botDiv.innerHTML = `
+          <div class="w-6 h-6 rounded-full bg-amber-600 text-white flex-shrink-0 flex items-center justify-center text-[10px] font-bold mt-0.5">
+            🍱
+          </div>
+          <div class="space-y-1 max-w-[85%]">
+            <div class="bg-white border border-slate-200 rounded-xl rounded-tl-none p-2.5 text-slate-800 leading-relaxed shadow-sm">
+              <div>${formatFloatingMarkdown(data.reply || data.error || 'No answer available.')}</div>
+              ${reasoningHtml}
+            </div>
+          </div>
+        `;
+        container.appendChild(botDiv);
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        loadDiv.remove();
+        sendBtn.disabled = false;
+        const errDiv = document.createElement('div');
+        errDiv.className = 'p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-[11px]';
+        errDiv.innerText = 'Network error contacting AI assistant.';
+        container.appendChild(errDiv);
+      }
+    }
+  </script>
+  {% endif %}
 </body>
 </html>
