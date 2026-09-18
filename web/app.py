@@ -163,7 +163,13 @@ def customer_subscribe_view():
         except Exception as e:
             flash(f"Error activating subscription: {str(e)}", "error")
 
-    return render_template("customer_subscribe.html", plans=plans, today_str=format_date(date.today()))
+    selected_plan_id = request.args.get("plan", "")
+    return render_template(
+        "customer_subscribe.html",
+        plans=plans,
+        selected_plan_id=selected_plan_id,
+        today_str=format_date(date.today()),
+    )
 
 
 @app.route("/customer/login", methods=["GET", "POST"])
@@ -510,6 +516,23 @@ def my_bill_view():
         month=month_str,
         bill=bill,
         error=error,
+        current_user=get_current_user(),
+    )
+
+
+@app.route("/kitchens")
+def kitchens_view():
+    """Directory of partner kitchens, tiffin parlors, hygiene certifications and plans."""
+    kitchens = service.list_kitchens()
+    plans = service.list_plans()
+    kitchen_plans = {}
+    for k in kitchens:
+        kitchen_plans[k.id] = [p for p in plans if p.kitchen_id == k.id]
+    return render_template(
+        "kitchens.html",
+        kitchens=kitchens,
+        kitchen_plans=kitchen_plans,
+        total_plans_count=len(plans),
         current_user=get_current_user(),
     )
 
@@ -871,6 +894,8 @@ def api_chat():
             "reasoning": result["reasoning"],
             "intent": result["intent"],
             "grounded_facts": result["grounded_facts"],
+            "sources_cited": result.get("sources_cited", []),
+            "metrics": result.get("metrics", {}),
         }), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500

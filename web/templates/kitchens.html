@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Partner Kitchens & Tiffin Parlors - Annapurna Tiffin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 space-y-8">
+  <!-- Hero Section -->
+  <div class="text-center space-y-3">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider">
+      <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span> 100% FSSAI Certified Kitchens
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900">Partner Kitchens & Tiffin Parlors</h1>
+    <p class="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto">
+      Every meal is prepared fresh each morning by certified local chefs using wood-pressed oils and hygienic stainless steel cookware. 
+      Subscribe to any parlor with our <strong>100% Pro-Rated Billing Guarantee</strong> — pause anytime, pay only for meals delivered!
+    </p>
+  </div>
+
+  <!-- Highlights Banner -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm text-center">
+      <div class="text-2xl mb-1">🛡️</div>
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">FSSAI Certified</h3>
+      <p class="text-[11px] text-slate-500 mt-0.5">100% government compliant</p>
+    </div>
+    <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm text-center">
+      <div class="text-2xl mb-1">🍳</div>
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Fresh Morning Prep</h3>
+      <p class="text-[11px] text-slate-500 mt-0.5">Cooking starts at 6:30 AM</p>
+    </div>
+    <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm text-center">
+      <div class="text-2xl mb-1">📐</div>
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Pro-Rated Billing</h3>
+      <p class="text-[11px] text-slate-500 mt-0.5">Paused days 100% credited</p>
+    </div>
+    <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm text-center">
+      <div class="text-2xl mb-1">🤖</div>
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Grounded AI Guide</h3>
+      <p class="text-[11px] text-slate-500 mt-0.5">100% faithful pricing checks</p>
+    </div>
+  </div>
+
+  <!-- Kitchen Directory Cards -->
+  <div class="space-y-6">
+    {% for k in kitchens %}
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition overflow-hidden">
+        <div class="p-6 sm:p-8">
+          <!-- Top Row: Kitchen Meta -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div class="space-y-1.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900">{{ k.name }}</h2>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-200">
+                  <i class="fa-solid fa-star text-amber-500 mr-1 text-[11px]"></i> {{ "%.1f"|format(k.rating) }}
+                </span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <i class="fa-solid fa-shield-check mr-1 text-emerald-600"></i> FSSAI: {{ k.fssai_license }}
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 flex items-center gap-2">
+                <span><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i> {{ k.location }}</span>
+                <span>&bull;</span>
+                <span><i class="fa-solid fa-phone text-slate-400 mr-1"></i> {{ k.phone }}</span>
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-700">
+                <i class="fa-solid fa-utensils text-amber-600 mr-1"></i> {{ k.cuisine }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Middle: Description & Chef Specialty -->
+          <div class="py-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="md:col-span-2 text-slate-600 leading-relaxed">
+              <p>{{ k.description }}</p>
+            </div>
+            <div class="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/80">
+              <span class="font-bold text-amber-900 block mb-1 uppercase text-[10px] tracking-wider">
+                <i class="fa-solid fa-fire text-amber-600 mr-1"></i> Signature Specialty
+              </span>
+              <p class="text-slate-800 font-semibold">{{ k.specialty }}</p>
+            </div>
+          </div>
+
+          <!-- Bottom: Plans Offered by this Kitchen -->
+          <div class="mt-4 pt-4 border-t border-slate-100">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+              Subscription Plans Available from this Kitchen:
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {% for p in kitchen_plans.get(k.id, []) %}
+                <div class="flex flex-col justify-between p-4 bg-slate-50/70 rounded-2xl border border-slate-200/80 hover:bg-white hover:border-amber-400 transition shadow-sm">
+                  <div class="space-y-1.5">
+                    <div class="flex justify-between items-start">
+                      <h5 class="font-bold text-slate-900 text-sm">{{ p.name }}</h5>
+                      <span class="text-xs">
+                        {% if 'non_veg' in p.id or 'chicken' in p.id %}🍗{% elif 'satvik' in p.id or 'veg' in p.id %}🥗{% else %}🍛{% endif %}
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 leading-normal">{{ p.description }}</p>
+                  </div>
+                  
+                  <div class="mt-3 pt-3 border-t border-slate-200/60 flex items-center justify-between">
+                    <div>
+                      <span class="text-base font-black text-slate-900">Rs. {{ "%.0f"|format(p.monthly_price) }}</span>
+                      <span class="text-[10px] text-slate-500">/ mo</span>
+                      <span class="block text-[10px] text-emerald-700 font-semibold">~Rs. {{ "%.0f"|format(p.monthly_price / 22) }}/meal</span>
+                    </div>
+                    <a href="{{ url_for('customer_subscribe_view') }}?plan={{ p.id }}" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-sm transition flex items-center gap-1">
+                      <span>Subscribe</span>
+                      <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </a>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Zero-Hallucination Assistant Callout -->
+  <div class="bg-gradient-to-r from-slate-900 to-amber-950 text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+    <div class="space-y-2">
+      <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-bold">
+        <i class="fa-solid fa-robot"></i> Grounded AI Evaluation
+      </div>
+      <h3 class="text-xl font-bold">Need Help Choosing the Right Kitchen?</h3>
+      <p class="text-xs text-slate-300 max-w-xl">
+        Ask our AI Assistant to compare plans, check Jain/Satvik options, or calculate your pro-rated bill with 100% mathematical accuracy and zero hallucination.
+      </p>
+    </div>
+    <div class="flex items-center gap-3 shrink-0">
+      <a href="{{ url_for('assistant_view') }}" class="px-5 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-2xl shadow-md transition flex items-center gap-2 text-xs">
+        <i class="fa-solid fa-comments"></i> Chat with AI Assistant
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

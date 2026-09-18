@@ -24,11 +24,26 @@ class SubscriptionStatus(str, Enum):
 
 
 @dataclass
+class Kitchen:
+    id: str
+    name: str
+    cuisine: str
+    location: str
+    rating: float = 4.8
+    fssai_license: str = ""
+    phone: str = ""
+    description: str = ""
+    specialty: str = ""
+
+
+@dataclass
 class Plan:
     id: str
     name: str
     monthly_price: float
     description: str = ""
+    kitchen_id: str = "annapurna"
+    kitchen_name: str = "Annapurna Homestyle Kitchen"
 
 
 @dataclass

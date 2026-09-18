@@ -27,13 +27,13 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         {% for p in plans %}
           <label class="relative flex flex-col p-5 bg-white rounded-2xl border-2 cursor-pointer transition hover:border-amber-500 hover:shadow-md has-[:checked]:border-amber-600 has-[:checked]:bg-amber-50/40 has-[:checked]:shadow-sm">
-            <input type="radio" name="plan_id" value="{{ p.id }}" required class="sr-only" {{ 'checked' if loop.first else '' }}>
+            <input type="radio" name="plan_id" value="{{ p.id }}" required class="sr-only" {{ 'checked' if (selected_plan_id and p.id == selected_plan_id) or (not selected_plan_id and loop.first) else '' }}>
             <div class="flex justify-between items-start mb-2">
               <span class="text-2xl">
-                {% if 'non_veg' in p.id %}🍗{% elif 'deluxe' in p.id %}🍛{% else %}🥗{% endif %}
+                {% if 'non_veg' in p.id or 'chicken' in p.id %}🍗{% elif 'satvik' in p.id or 'veg' in p.id %}🥗{% else %}🍛{% endif %}
               </span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800">
-                Weekday Lunch
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 truncate max-w-[140px]" title="{{ p.kitchen_name }}">
+                {{ p.kitchen_name or 'Homestyle Lunch' }}
               </span>
             </div>
             <h4 class="font-bold text-slate-900 text-base">{{ p.name }}</h4>

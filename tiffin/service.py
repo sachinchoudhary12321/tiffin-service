@@ -13,7 +13,7 @@ import urllib.parse
 
 from .billing import calculate_pro_rated_bill
 from .calendar_utils import format_date, is_weekday, parse_date
-from .models import Bill, Customer, PauseRecord, Plan, Subscription, SubscriptionStatus, User
+from .models import Bill, Customer, Kitchen, PauseRecord, Plan, Subscription, SubscriptionStatus, User
 from .storage import Storage
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -51,6 +51,16 @@ class TiffinService:
 
     def get_plan(self, plan_id: str) -> Optional[Plan]:
         return self.storage.get_plan(plan_id)
+
+    # --- Kitchen Management ---
+    def list_kitchens(self) -> List[Kitchen]:
+        return self.storage.list_kitchens()
+
+    def get_kitchen(self, kitchen_id: str) -> Optional[Kitchen]:
+        return self.storage.get_kitchen(kitchen_id)
+
+    def list_plans_by_kitchen(self, kitchen_id: str) -> List[Plan]:
+        return self.storage.get_plans_by_kitchen(kitchen_id)
 
     # --- User Authentication ---
     def register_user(self, username: str, password: str, email: str = "", role: str = "owner") -> User:

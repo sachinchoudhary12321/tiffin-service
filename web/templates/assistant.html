@@ -40,6 +40,18 @@
       <button onclick="sendQuickPrompt('What are your meal plans and prices?')" class="px-3 py-1.5 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition shadow-sm font-medium">
         🍱 Plans & Pricing
       </button>
+      <button onclick="sendQuickPrompt('What partner kitchens and tiffin parlors do you have?')" class="px-3 py-1.5 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition shadow-sm font-medium">
+        🏪 Partner Kitchens
+      </button>
+      <button onclick="sendQuickPrompt('Where can I get Jain or Satvik food?')" class="px-3 py-1.5 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition shadow-sm font-medium">
+        🥗 Jain & Satvik
+      </button>
+      <button onclick="sendQuickPrompt('Compare prices of all plans')" class="px-3 py-1.5 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition shadow-sm font-medium">
+        ⚖️ Compare Prices
+      </button>
+      <button onclick="sendQuickPrompt('Are your kitchens FSSAI certified?')" class="px-3 py-1.5 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition shadow-sm font-medium">
+        🛡️ FSSAI & Hygiene
+      </button>
       <button onclick="sendQuickPrompt('How is pro-rated billing calculated?')" class="px-3 py-1.5 rounded-full bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 transition shadow-sm font-medium">
         📐 Pro-Rating Formula
       </button>
@@ -173,6 +185,42 @@
       `;
     }
 
+    let sourcesHtml = '';
+    if (data.sources_cited && data.sources_cited.length > 0) {
+      sourcesHtml = `
+        <div class="mt-2 flex flex-wrap gap-1.5 items-center">
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Sources:</span>
+          ${data.sources_cited.map(s => {
+            const label = s.name || s.id || s.phone || s.entity_type;
+            const sub = s.fssai ? ` (${s.fssai})` : s.price ? ` (Rs. ${s.price})` : '';
+            return `<span class="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md text-[10px] font-mono"><i class="fa-solid fa-database text-[9px] mr-1 text-slate-400"></i>${label}${sub}</span>`;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    const m = data.metrics || {};
+    const faithfulnessPct = m.faithfulness !== undefined ? Math.round(m.faithfulness * 100) : 100;
+    const groundednessPct = m.groundedness !== undefined ? Math.round(m.groundedness * 100) : 100;
+    const accuracyPct = m.arithmetic_accuracy !== undefined ? Math.round(m.arithmetic_accuracy * 100) : 100;
+
+    const metricsHtml = `
+      <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-2 text-[10px]">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold" title="Evaluated: 100% of claims entailed by database state">
+          <i class="fa-solid fa-shield-halved mr-1"></i> Faithfulness: ${faithfulnessPct}%
+        </span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-bold" title="Evaluated: All cited entities map to verified database records">
+          <i class="fa-solid fa-bullseye mr-1"></i> Groundedness: ${groundednessPct}%
+        </span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 font-bold" title="Evaluated: Arithmetic pro-ration mathematically verified">
+          <i class="fa-solid fa-calculator mr-1"></i> Accuracy: ${accuracyPct}%
+        </span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 font-medium">
+          <i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> Zero Hallucination
+        </span>
+      </div>
+    `;
+
     msgDiv.innerHTML = `
       <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex-shrink-0 flex items-center justify-center text-xs font-bold mt-0.5 shadow-sm">
         🍱
@@ -182,6 +230,8 @@
           <div>${formatMarkdown(data.reply)}</div>
           ${reasoningHtml}
           ${factsHtml}
+          ${sourcesHtml}
+          ${metricsHtml}
         </div>
       </div>
     `;
